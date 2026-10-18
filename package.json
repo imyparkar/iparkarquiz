@@ -1,0 +1,13 @@
+{
+  "name": "iparkar-live-quiz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iParkar Live HSE Quiz — live, timed, multiplayer HSE quiz (Cloudflare Workers + Durable Objects)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

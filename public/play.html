@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f4">
+<title>Join – iParkar Live HSE Quiz</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="phone">
+  <div class="top">
+    <div class="brand"><img class="logo" src="brand/iparkar-mark-primary.svg" alt="" width="30" height="30"><span class="wordmark">iParkar <span class="product">Live HSE Quiz</span></span></div>
+    <span class="chip"><span class="conn off" id="conn"></span> <span id="roomLbl">—</span></span>
+  </div>
+
+  <!-- Join -->
+  <section id="p-join" data-screen>
+    <h1>Join the quiz</h1>
+    <p class="lead">Enter your name as you want it to appear on the leaderboard.</p>
+    <form id="joinForm">
+      <div class="field" id="codeField">
+        <label for="code">Room code</label>
+        <input id="code" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="K7Q2MX">
+      </div>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input id="name" maxlength="24" autocomplete="name" placeholder="Ahmed Al-Ali" required>
+      </div>
+      <button class="btn" type="submit" id="joinBtn">Join quiz</button>
+    </form>
+  </section>
+
+  <!-- Lobby -->
+  <section id="p-lobby" data-screen class="center hidden">
+    <span class="status-pill big-pill">You're in</span>
+    <h1>Welcome, <span id="meName"></span></h1>
+    <p class="lead">Watch the main screen. The first question appears here when the presenter starts.</p>
+    <div class="stat"><div><b id="lobbyCount">1</b>joined</div><div><b id="lobbyTotal">20</b>questions</div><div><b>40 s</b>each</div></div>
+  </section>
+
+  <!-- Question -->
+  <section id="p-question" data-screen class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span class="chip">Q <b id="pqNum">1</b>/<b id="pqTotal">20</b></span>
+      <span class="chip" id="pqRef"></span>
+      <span class="chip"><b id="pTime">40</b>s</span>
+    </div>
+    <div class="timebar" id="pBar" style="margin-top:12px"><div></div></div>
+    <div class="pq" id="pqText"></div>
+    <div class="pbtns" id="pbtns"></div>
+    <div id="pStatus"></div>
+  </section>
+
+  <!-- Final -->
+  <section id="p-final" data-screen class="center hidden">
+    <span class="status-pill big-pill" id="finalEmoji">Finished</span>
+    <h1 id="finalTitle">Quiz complete</h1>
+    <div class="stat"><div><b id="fRank">–</b>your rank</div><div><b id="fScore">0</b>points</div></div>
+    <div class="card" style="padding:16px;text-align:left">
+      <div class="muted" style="margin-bottom:8px;font-size:14px">Winners</div>
+      <div class="rows" id="fPodium"></div>
+    </div>
+  </section>
+
+  <div class="foot" id="footer"></div>
+  <div class="foot-mini">iParkar HSE Academy · <a href="https://iparkar.com" target="_blank" rel="noopener">iparkar.com</a></div>
+</main>
+<script src="common.js"></script>
+<script src="play.js"></script>
+</body>
+</html>
