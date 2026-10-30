@@ -143,6 +143,11 @@ function connect(code, key) {
 
 function render() {
   const s = state;
+  if (s.config?.custom) {
+    document.title = `${s.config.title} – iParkar Learning`;
+    $("againBtn").textContent = "Play this quiz again";
+    document.querySelector("#s-final h1").textContent = "Our quiz champions";
+  }
   if (s.phase === "lobby") return renderLobby();
   if (s.phase === "question" || s.phase === "reveal") return renderQuestion();
   if (s.phase === "final") return renderFinal();
@@ -158,9 +163,13 @@ function renderLobby() {
   $("presentBtn").disabled = ps.length === 0;
   const c = state.config;
   if (c) {
-    const topics = c.allTopics ? "All 24 topics" : c.topics.length <= 4 ? c.topics.map((t) => esc(t.ref)).join(", ") : `${c.topics.length} topics`;
-    const title = c.topics.map((t) => `${t.ref} ${t.name}`).join("\n");
-    $("cfgLine").innerHTML = `<span class="chip" title="${esc(title)}">Topics <b>${topics}</b></span><span class="chip">Level <b>${esc(c.difficultyLabel)}</b></span><span class="chip"><b>${c.numQuestions}</b> questions</span>`;
+    if (c.custom) {
+      $("cfgLine").textContent = `${c.title} · ${c.numQuestions} question${c.numQuestions === 1 ? "" : "s"} · Custom quiz`;
+    } else {
+      const topics = c.allTopics ? "All 24 topics" : c.topics.length <= 4 ? c.topics.map((t) => esc(t.ref)).join(", ") : `${c.topics.length} topics`;
+      const title = c.topics.map((t) => `${t.ref} ${t.name}`).join("\n");
+      $("cfgLine").innerHTML = `<span class="chip" title="${esc(title)}">Topics <b>${topics}</b></span><span class="chip">Level <b>${esc(c.difficultyLabel)}</b></span><span class="chip"><b>${c.numQuestions}</b> questions</span>`;
+    }
   }
   const sig = ps.map((p) => p.pid + p.online).join("|");
   if (sig !== lastNames) {
@@ -200,7 +209,10 @@ function renderQuestion() {
   }).join("");
 
   $("qSource").classList.toggle("hidden", !reveal);
-  if (reveal) $("qSource").innerHTML = `<b>${esc(q.ref)}${q.procedure ? " " + esc(q.procedure) : ""}</b> — ${esc(q.source)}`;
+  if (reveal) {
+    $("qSource").innerHTML = state.config?.custom ? esc(q.source) : `<b>${esc(q.ref)}${q.procedure ? " " + esc(q.procedure) : ""}</b> — ${esc(q.source)}`;
+    $("qSource").classList.toggle("hidden", !q.source);
+  }
 
   const last = s.qIndex + 1 >= s.total;
   $("nextBtn").classList.toggle("hidden", !reveal || last);
@@ -258,7 +270,7 @@ function renderFinal() {
     return `<div class="step p${i + 1}"><div class="medal">${medals[i]} place</div><div class="who">${esc(p.name)}</div><div class="pts">${p.score.toLocaleString()} pts · ${p.correct}/${state.total} correct</div><div class="place">${i + 1}</div></div>`;
   }).join("");
   const c = state.config;
-  $("finalSub").textContent = `${ps.length} participant${ps.length === 1 ? "" : "s"} · ${state.total} questions` + (c ? ` · ${c.difficultyLabel} · ${c.allTopics ? "all topics" : c.topics.length + " topic" + (c.topics.length === 1 ? "" : "s")}` : "");
+  $("finalSub").textContent = `${ps.length} participant${ps.length === 1 ? "" : "s"} · ${state.total} question${state.total === 1 ? "" : "s"}` + (c?.custom ? ` · ${c.title}` : c ? ` · ${c.difficultyLabel} · ${c.allTopics ? "all topics" : c.topics.length + " topic" + (c.topics.length === 1 ? "" : "s")}` : "");
   $("finalBoard").innerHTML = ps.map((p) => `<div class="row"><span class="rk">${p.rank}</span><span class="nm">${esc(p.name)} <span class="muted" style="font-weight:400">· ${p.correct}/${state.total} correct</span></span><span class="sc">${p.score.toLocaleString()}</span></div>`).join("");
 }
 
@@ -270,17 +282,17 @@ function downloadCSV() {
   const lvl = c ? c.difficultyLabel : "";
   const topics = c ? (c.allTopics ? "All topics" : c.refs.join(" ")) : "";
   for (const p of state.players) rows.push([p.rank, p.name, p.score, p.correct, state.total, lvl, topics, state.room, date]);
-  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/^[=+@\-\t\r]/, "'$&").replace(/"/g, '""')}"`).join(",")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-  a.download = `iParkar-HSE-Quiz-results-${state.room}.csv`;
+  a.download = `iParkar-Learning-Quiz-results-${state.room}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
 
 // ---------- Share the QR card (link + image) ----------
-function shareText() { return `Join the iParkar Live HSE Quiz — room code ${joinCode}`; }
+function shareText() { return `Join ${state?.config?.custom ? state.config.title : "the iParkar Live HSE Quiz"} — room code ${joinCode}`; }
 
 function loadImg(src) {
   return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
@@ -312,9 +324,9 @@ async function shareImageBlob() {
   const logo = await loadImg("brand/iparkar-mark-primary-1024.png");
   if (logo) ctx.drawImage(logo, W / 2 - 150, 116, 72, 72);
   ctx.textAlign = "left"; ctx.fillStyle = "#000000"; ctx.font = `600 34px ${font}`; ctx.fillText("iParkar", W / 2 - 62, 150);
-  ctx.fillStyle = "#615d59"; ctx.font = `500 22px ${font}`; ctx.fillText("HSE Academy", W / 2 - 62, 180);
+  ctx.fillStyle = "#615d59"; ctx.font = `500 22px ${font}`; ctx.fillText("Learning", W / 2 - 62, 180);
   ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#000000";
-  ctx.font = `600 64px ${font}`; ctx.fillText("Live HSE Quiz", W / 2, 268);
+  ctx.font = `600 64px ${font}`; ctx.fillText(state?.config?.custom ? "Custom Quiz" : "Live HSE Quiz", W / 2, 268);
   ctx.fillStyle = "#615d59"; ctx.font = `400 32px ${font}`; ctx.fillText("Scan to join", W / 2, 318);
   // QR code
   const n = qrModel.getModuleCount(), size = 600, cell = Math.floor(size / n), qs = cell * n;
@@ -352,8 +364,8 @@ async function doShare(kind) {
   try {
     if (kind === "native") {
       const file = await shareFile();
-      if (file && navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ title: "iParkar Live HSE Quiz", text: `${text}\n${url}`, files: [file] });
-      else await navigator.share({ title: "iParkar Live HSE Quiz", text, url });
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ title: state?.config?.custom ? state.config.title : "iParkar Live HSE Quiz", text: `${text}\n${url}`, files: [file] });
+      else await navigator.share({ title: state?.config?.custom ? state.config.title : "iParkar Live HSE Quiz", text, url });
     } else if (kind === "copy") {
       toast((await copyText(url)) ? "Join link copied" : "Could not copy — select the link below the code");
     } else if (kind === "copyimg") {
@@ -367,7 +379,7 @@ async function doShare(kind) {
     } else if (kind === "whatsapp") {
       window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank", "noopener");
     } else if (kind === "email") {
-      location.href = `mailto:?subject=${encodeURIComponent("Join the iParkar Live HSE Quiz")}&body=${encodeURIComponent(`${text}\n\n${url}\n\nOpen the link on your phone, enter your name and wait for the first question.`)}`;
+      location.href = `mailto:?subject=${encodeURIComponent(state?.config?.custom ? `Join ${state.config.title}` : "Join the iParkar Live HSE Quiz")}&body=${encodeURIComponent(`${text}\n\n${url}\n\nOpen the link on your phone, enter your name and wait for the first question.`)}`;
     }
   } catch (e) {
     if (e && e.name !== "AbortError") toast("Sharing is not available here — use Copy link instead");
@@ -390,6 +402,7 @@ $("againBtn").onclick = () => sock && sock.send({ t: "restart" });
 $("csvBtn").onclick = downloadCSV;
 // "New session" goes back to the setup screen so topics and difficulty can be changed.
 $("newRoomBtn").onclick = () => {
+  if (state?.config?.custom) { location.href = "custom.html"; return; }
   if (sock) sock.close();
   sock = null; state = null;
   store("local", "hseq_host_code", null); store("local", "hseq_host_key", null);
@@ -429,12 +442,20 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-loadCatalog();
+const customLaunch = new URLSearchParams(location.search).get("custom") === "1";
+if (!customLaunch) loadCatalog();
 
-const prev = saved();
+const prev = customLaunch ? (() => {
+  try { return JSON.parse(sessionStorage.getItem("ipq_launch")); } catch { return null; }
+})() : saved();
 if (prev) {
   $("resumeBox").classList.remove("hidden");
   $("resumeCode").textContent = prev.code;
   $("resumeBtn").onclick = () => connect(prev.code, prev.key);
 }
 show("s-start");
+
+if (customLaunch) {
+  if (prev?.code && prev?.key) connect(prev.code, prev.key);
+  else location.replace("custom.html");
+}

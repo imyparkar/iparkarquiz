@@ -12,5 +12,6 @@
     "bindings": [{ "name": "QUIZ_ROOM", "class_name": "QuizRoom" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["QuizRoom"] }],
+  "d1_databases": [{ "binding": "DB", "database_name": "iparkar-quizzes", "database_id": "REPLACE_WITH_D1_DATABASE_ID", "migrations_dir": "migrations" }],
   "observability": { "enabled": true }
 }

@@ -1,6 +1,21 @@
+# iParkar Learning Live Quiz
+
+The app includes the existing HSE live quiz and a private custom quiz workspace. Creators register with email/password, save and edit quizzes, select answer keys, present live, resume sessions and download saved results. Participants join by name without creator accounts.
+
+**Activation required:** follow [SETUP-CUSTOM-QUIZZES.md](SETUP-CUSTOM-QUIZZES.md) to create Supabase Auth, provision D1 and configure Cloudflare Access before deploying. The D1 ID in this branch is a placeholder. Live credentials and real email delivery have not been configured.
+
+- `/` — existing HSE presenter
+- `/custom.html` — registration, sign-in, quiz library, editor and result history
+- `/present?custom=1` — custom presenter, using a room key from the creator workspace
+- `/play.html` — participant screen
+
+Tests: `pnpm install` then `pnpm test` (Node 22+).
+
+---
+
 # iParkar Live HSE Quiz
 
-A live, timed, multiplayer HSE quiz from **iParkar HSE Academy**. The presenter projects the quiz; participants scan a QR code, enter their name and answer on their own phone or laptop.
+A live, timed, multiplayer HSE quiz from **iParkar Learning**. The presenter projects the quiz; participants scan a QR code, enter their name and answer on their own phone or laptop.
 
 - Presenter picks the **topics** (any of 24 KOC HSSE procedures) and the **difficulty** (Easy, Medium or Default = mixed) before creating a session
 - Up to 20 questions per quiz from a 500-question bank, spread evenly across the chosen topics, with option order shuffled every run
@@ -11,7 +26,7 @@ A live, timed, multiplayer HSE quiz from **iParkar HSE Academy**. The presenter 
 - Shareable join card: the **Share** button on the QR code copies the link, copies or downloads the QR card as an image, or shares by WhatsApp, email or the device's share sheet
 - Winners podium (1st, 2nd, 3rd), full ranking and CSV download
 
-It runs on **Cloudflare Workers + Durable Objects** (the free plan is enough). The Durable Object keeps each quiz room's state on the server, so all screens stay in sync and correct answers are never sent to phones before the reveal.
+It runs on **Cloudflare Workers + Durable Objects** (usage is subject to your selected plan). The Durable Object keeps each quiz room's state on the server, so all screens stay in sync and correct answers are never sent to phones before the reveal.
 
 ---
 

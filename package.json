@@ -2,12 +2,15 @@
   "name": "iparkar-live-quiz",
   "version": "1.0.0",
   "private": true,
-  "description": "iParkar Live HSE Quiz — live, timed, multiplayer HSE quiz (Cloudflare Workers + Durable Objects)",
+  "description": "iParkar Learning \u2014 live HSE and custom quizzes",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
-    "wrangler": "^4.0.0"
-  }
+    "wrangler": "^4.0.0",
+    "esbuild": "^0.28.2"
+  },
+  "type": "module"
 }

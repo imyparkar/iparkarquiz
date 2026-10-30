@@ -4,6 +4,7 @@
 // presenter screen always agree, and correct answers never reach participants early.
 
 import BANK from "./questions.json";
+import { customApi } from "./custom.js";
 
 // ---- Quiz settings (change here if needed) ----
 const SETTINGS = {
@@ -156,6 +157,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.pathname === "/present") return env.ASSETS.fetch(new Request(new URL("/", url), request));
+
+    if (url.pathname.startsWith("/api/custom/")) return customApi(request, env);
+
     if (url.pathname === "/api/rooms" && request.method === "POST") {
       let body = {};
       try { body = await request.json(); } catch {}
@@ -220,10 +225,11 @@ export class QuizRoom {
 
     if (url.pathname === "/init") {
       if (this.s) return new Response("exists", { status: 409 });
-      const { code, config } = await request.json();
+      const { code, config, custom } = await request.json();
       this.s = {
         code,
         config: normaliseConfig(config),
+        custom: custom || null,
         hostKey: randomToken(),
         createdAt: Date.now(),
         phase: "lobby",
@@ -237,6 +243,12 @@ export class QuizRoom {
       };
       await this.save();
       return json({ code, hostKey: this.s.hostKey });
+    }
+
+    if (url.pathname === "/host-key" && request.method === "POST") {
+      const { ownerId } = await request.json();
+      if (!this.s?.custom || this.s.custom.ownerId !== ownerId) return json({ error: "Forbidden" }, 403);
+      return json({ code: this.s.code, hostKey: this.s.hostKey });
     }
 
     if (request.headers.get("Upgrade") === "websocket") {
@@ -285,9 +297,9 @@ export class QuizRoom {
         if (!Object.keys(s.players).length) { ws.send(JSON.stringify({ t: "error", message: "Wait for at least one participant to join." })); break; }
         {
           const cfg = this.config();
-          const pool = questionPool(cfg);
+          const pool = s.custom ? s.custom.questions : questionPool(cfg);
           if (!pool.length) { ws.send(JSON.stringify({ t: "error", message: "No questions match this session's topics and difficulty." })); break; }
-          s.questions = drawQuestions(SETTINGS.numQuestions, pool);
+          s.questions = s.custom ? structuredClone(pool) : drawQuestions(SETTINGS.numQuestions, pool);
         }
         s.round += 1;
         await this.openQuestion(0);
@@ -304,6 +316,7 @@ export class QuizRoom {
         if (s.phase === "reveal" || s.phase === "question") { await this.finish(); return; }
         break;
       case "restart":
+        if (s.archivePending) { await this.archiveResults(); if (s.archivePending) { ws.send(JSON.stringify({ t: "error", message: "Results are still saving. Please retry shortly." })); return; } }
         // New random set of questions, same participants, scores reset.
         for (const p of Object.values(s.players)) { p.score = 0; p.correct = 0; p.timeMs = 0; p.answers = {}; }
         s.phase = "lobby"; s.qIndex = -1; s.questions = []; s.qStart = 0; s.qDeadline = 0; s.revealAt = 0;
@@ -385,7 +398,7 @@ export class QuizRoom {
     s.phase = "question";
     s.qIndex = i;
     s.qStart = Date.now() + 1500; // short "get ready" lead-in
-    s.qDeadline = s.qStart + SETTINGS.secondsPerQuestion * 1000;
+    s.qDeadline = s.qStart + (s.custom?.secondsPerQuestion || SETTINGS.secondsPerQuestion) * 1000;
     await this.ctx.storage.setAlarm(s.qDeadline + SETTINGS.graceMs);
     await this.save();
     this.broadcast();
@@ -405,12 +418,37 @@ export class QuizRoom {
 
   async finish() {
     this.s.phase = "final";
+    if (this.s.custom) await this.archiveResults();
     await this.ctx.storage.deleteAlarm();
+    if (this.s.archivePending) await this.ctx.storage.setAlarm(Date.now() + 60000);
     await this.save();
     this.broadcast();
   }
 
+  summary() {
+    if (!this.s.custom) return configSummary(this.config());
+    const c = this.s.custom;
+    return { custom: true, title: c.title, refs: [], topics: [], allTopics: false, difficultyLabel: "Custom quiz", numQuestions: c.questions.length };
+  }
+
+  async archiveResults() {
+    const s = this.s, c = s.custom;
+    try {
+      const results = { title: c.title, total: s.questions.length, players: this.computeRanking().map(({name,score,correct,timeMs,rank}) => ({name,score,correct,timeMs,rank})) };
+      await this.env.DB.prepare('INSERT INTO quiz_results (id,session_id,round,finished_at,results_json) VALUES (?,?,?,?,?) ON CONFLICT(session_id,round) DO UPDATE SET results_json=excluded.results_json').bind(`${c.sessionId}-${s.round}`,c.sessionId,s.round,Date.now(),JSON.stringify(results)).run();
+      s.archivePending = false;
+    } catch {
+      s.archivePending = true;
+    }
+  }
+
   async alarm() {
+    if (this.s?.phase === "final" && this.s.archivePending) {
+      await this.archiveResults();
+      await this.save();
+      if (this.s.archivePending) await this.ctx.storage.setAlarm(Date.now() + 60000);
+      return;
+    }
     if (!this.s) return;
     if (this.s.phase === "question") return this.closeQuestion();
     if (this.s.phase === "reveal" && this.s.qIndex + 1 >= this.s.questions.length) return this.finish();
@@ -448,12 +486,12 @@ export class QuizRoom {
       now: Date.now(),
       room: s.code,
       phase: s.phase,
-      settings: { numQuestions: SETTINGS.numQuestions, secondsPerQuestion: SETTINGS.secondsPerQuestion },
+      settings: { numQuestions: s.custom?.questions.length || SETTINGS.numQuestions, secondsPerQuestion: s.custom?.secondsPerQuestion || SETTINGS.secondsPerQuestion },
       qIndex: s.qIndex,
-      total: s.questions.length || configSummary(this.config()).numQuestions,
+      total: s.questions.length || this.summary().numQuestions,
       qStart: s.qStart,
       qDeadline: s.qDeadline,
-      config: configSummary(this.config()),
+      config: this.summary(),
       players: ranking,
       answeredPids: q ? Object.entries(s.players).filter(([, p]) => p.answers[s.qIndex]).map(([pid]) => pid) : [],
       lastPoints: q ? Object.fromEntries(Object.entries(s.players).filter(([, p]) => p.answers[s.qIndex]).map(([pid, p]) => [pid, p.answers[s.qIndex].points])) : {},
@@ -491,11 +529,13 @@ export class QuizRoom {
       room: s.code,
       phase: s.phase,
       qIndex: s.qIndex,
-      total: s.questions.length || configSummary(this.config()).numQuestions,
+      total: s.questions.length || this.summary().numQuestions,
       qStart: s.qStart,
       qDeadline: s.qDeadline,
       me: p ? { name: p.name, score: p.score, rank: me?.rank, of: ranking.length } : null,
       playerCount: ranking.length,
+      settings: { secondsPerQuestion: s.custom?.secondsPerQuestion || SETTINGS.secondsPerQuestion },
+      custom: !!s.custom,
     };
     if (q && (s.phase === "question" || s.phase === "reveal")) {
       view.question = { ref: q.ref, q: q.q, options: q.options };
