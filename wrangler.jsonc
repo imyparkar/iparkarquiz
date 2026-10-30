@@ -13,5 +13,9 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["QuizRoom"] }],
   "d1_databases": [{ "binding": "DB", "database_name": "iparkar-quizzes", "database_id": "3ce93897-0d79-4e4e-a0f6-df6f05f9db7c", "migrations_dir": "migrations" }],
+  "previews": {
+    "d1_databases": [{ "binding": "DB", "database_name": "iparkar-quizzes-preview", "database_id": "2fa4d755-2d5c-474d-82e3-629f416d8dd9" }],
+    "durable_objects": { "bindings": [{ "name": "QUIZ_ROOM", "class_name": "QuizRoom" }] }
+  },
   "observability": { "enabled": true }
 }
