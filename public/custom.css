@@ -44,3 +44,5 @@
 .account-layout .facts{justify-content:flex-start}
 .account-layout .auth-card>*{align-self:stretch}.account-layout .auth-card>#forgot{align-self:flex-start}
 .account-layout .intro .facts .pill-tag{margin:0}
+
+.captcha { margin: 0.75rem 0; min-height: 65px; }

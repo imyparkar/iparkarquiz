@@ -23,7 +23,7 @@ globalThis.fetch=async(url,options={})=>{
     const token=new Headers(options.headers).get('Authorization');
     if(String(url).endsWith('/user')) return new Response(JSON.stringify(token==='Bearer alice'?{id:'alice',email:'alice@example.com'}:token==='Bearer bob'?{id:'bob',email:'bob@example.com'}:{error:'Invalid token'}),{status:['Bearer alice','Bearer bob'].includes(token)?200:401});
     if(String(url).includes('grant_type=password'))return new Response(JSON.stringify({access_token:'alice',refresh_token:'refresh-alice',expires_in:3600,user:{id:'alice',email:'alice@example.com'}}));
-    if(String(url).endsWith('/signup'))return new Response(JSON.stringify({id:'new-account'}));
+    if(new URL(url).pathname.endsWith('/signup'))return new Response(JSON.stringify({id:'new-account'}));
     return new Response(JSON.stringify({error:'invalid'}),{status:400});
   }
   return realFetch(url,options);
@@ -73,7 +73,7 @@ test('HSE engine still draws 20 questions, hides keys until reveal, keeps 40-sec
 });
 test('missing setup returns clear unavailable response without affecting HSE routes',async()=>{
   assert.equal((await customApi(request('/quizzes'),{})).status,503);
-  assert.deepEqual(await (await customApi(request('/config'),{})).json(),{configured:false});
+  assert.deepEqual(await (await customApi(request('/config'),{})).json(),{configured:false,turnstileSiteKey:''});
 });
 test('failed result writes retry and prevent replay until the saved round is archived',async()=>{
   const env=environment();const id=(await (await customApi(request('/quizzes','POST',quiz),env)).json()).id;
@@ -93,4 +93,17 @@ test('sign-up requests email confirmation, recovery hides account existence, log
   const recover=await customApi(request('/auth/recover','POST',{email:'unknown@example.test'},null),env);assert.equal(recover.status,200);assert.match((await recover.json()).message,/If this email/);
   const invalid=await customApi(request('/auth/reset','POST',{email:'a@example.test',code:'invalid',password:'password123'},null),env);assert.equal(invalid.status,400);
   const logout=await customApi(request('/auth/logout','POST'),env);assert.equal(logout.status,200);assert.equal((logout.headers.get('set-cookie').match(/Max-Age=0/g)||[]).length,2);
+});
+
+test('quiz sign-up and recovery emails return to the quiz; CAPTCHA token is forwarded when present',async()=>{
+  const env={...environment(),TURNSTILE_SITE_KEY:'site-key'};authCalls=[];
+  assert.equal((await (await customApi(request('/config'),env)).json()).turnstileSiteKey,'site-key');
+  await customApi(request('/auth/signup','POST',{email:'new@example.test',password:'password123',captchaToken:'tok-1'},null),env);
+  await customApi(request('/auth/recover','POST',{email:'new@example.test',captchaToken:'tok-2'},null),env);
+  await customApi(request('/auth/login','POST',{email:'alice@example.com',password:'password123'},null),env);
+  const [signup,recover,login]=authCalls;
+  for(const call of [signup,recover]) assert.equal(new URL(call.url).searchParams.get('redirect_to'),'https://quiz.test/custom.html?mode=login');
+  assert.equal(JSON.parse(signup.options.body).gotrue_meta_security.captcha_token,'tok-1');
+  assert.equal(JSON.parse(recover.options.body).gotrue_meta_security.captcha_token,'tok-2');
+  assert.equal(JSON.parse(login.options.body).gotrue_meta_security,undefined);
 });
