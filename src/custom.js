@@ -5,6 +5,16 @@ function cookies(request) {
   return Object.fromEntries((request.headers.get('cookie') || '').split(';').map(s => s.trim().split(/=(.*)/s)).filter(p => p[0]));
 }
 function authHeaders(env) { return { apikey: env.SUPABASE_PUBLISHABLE_KEY, 'content-type': 'application/json' }; }
+// Accounts are shared with the iParkar LMS (same Supabase project). Emails sent for quiz sign-ups and
+// password recovery carry this address as RedirectTo, so the shared email templates can send quiz users
+// back to the quiz instead of the LMS. It must be listed in Supabase → Auth → URL Configuration → Redirect URLs.
+const quizReturnUrl = origin => `${origin}/custom.html?mode=login`;
+const withReturn = (endpoint, origin) => `${endpoint}?redirect_to=${encodeURIComponent(quizReturnUrl(origin))}`;
+// When Supabase CAPTCHA protection is on, sign-in, sign-up and recovery must include a Turnstile token.
+function withCaptcha(payload, token) {
+  if (typeof token === 'string' && token && token.length <= 4096) payload.gotrue_meta_security = { captcha_token: token };
+  return payload;
+}
 function sessionReply(data, session, request) {
   const res = reply(data);
   const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
@@ -61,7 +71,7 @@ async function profile(env, user, signIn = false) {
 }
 export async function customApi(request, env) {
   const url = new URL(request.url), path = url.pathname, method = request.method;
-  if (path === '/api/custom/config') return reply({ configured: !!(env.DB && env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY) });
+  if (path === '/api/custom/config') return reply({ configured: !!(env.DB && env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY), turnstileSiteKey: env.TURNSTILE_SITE_KEY || '' });
   if (!env.DB || !env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) return reply({ error: 'Creator accounts are being set up. Please try again later.' }, 503);
   if (method !== 'GET' && request.headers.get('origin') !== url.origin) return reply({ error: 'Request origin is not allowed.' }, 403);
   try {
@@ -74,9 +84,9 @@ export async function customApi(request, env) {
         return sessionReply({ ok: true }, null, request);
       }
       if (action === 'recover') {
-        const { email } = await body(request);
+        const { email, captchaToken } = await body(request);
         if (typeof email !== 'string' || !email.trim() || email.length > 254) return reply({ error: 'Enter your email address.' },400);
-        await fetch(`${env.SUPABASE_URL}/auth/v1/recover`, { method:'POST',headers:authHeaders(env),body:JSON.stringify({email:email.trim()}) });
+        await fetch(`${env.SUPABASE_URL}/auth/v1${withReturn('/recover', url.origin)}`, { method:'POST',headers:authHeaders(env),body:JSON.stringify(withCaptcha({email:email.trim()}, captchaToken)) });
         return reply({ message:'If this email has an account, a recovery code has been sent. Check your inbox.' });
       }
       if (action === 'reset') {
@@ -98,8 +108,8 @@ export async function customApi(request, env) {
         const input = await body(request);
         const email = String(input.email || '').trim(), password = String(input.password || '');
         if (!email || email.length > 254 || password.length < 8 || password.length > 128) return reply({ error: 'Enter your email and a password of 8–128 characters.' }, 400);
-        payload = { email, password };
-        endpoint = action === 'login' ? '/token?grant_type=password' : '/signup';
+        payload = withCaptcha({ email, password }, input.captchaToken);
+        endpoint = action === 'login' ? '/token?grant_type=password' : withReturn('/signup', url.origin);
         if (action === 'signup') payload.data = { display_name: String(input.name || '').trim().slice(0, 80) };
       } else return reply({ error: 'Not found.' }, 404);
       const r = await fetch(`${env.SUPABASE_URL}/auth/v1${endpoint}`, { method: 'POST', headers: authHeaders(env), body: JSON.stringify(payload) });

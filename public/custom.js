@@ -15,6 +15,20 @@ async function api(path, options = {}, retry = true) {
   if (!r.ok) { if (r.status === 401 && !path.startsWith('/auth/')) { user = null; $('logout').classList.add('hidden'); screen('account'); renderAuth(); } throw new Error(data.error || 'Please try again.'); }
   return data;
 }
+// Cloudflare Turnstile, shown only when the server provides a site key (Supabase CAPTCHA protection on).
+let captchaId = null;
+function loadCaptcha(siteKey) {
+  if (!siteKey) return;
+  window.onTurnstileLoad = () => { $('captcha').classList.remove('hidden'); captchaId = turnstile.render('#captcha', { sitekey: siteKey }); };
+  const s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad'; s.async = true; document.head.append(s);
+}
+function captchaToken() {
+  if (captchaId === null) return undefined;
+  const token = turnstile.getResponse(captchaId);
+  if (!token) throw new Error('Please complete the security check, then try again.');
+  return token;
+}
+function resetCaptcha() { if (captchaId !== null) turnstile.reset(captchaId); }
 function renderAuth() {
   const signup = mode === 'signup';
   $('authHeading').textContent = signup ? 'Create your free account' : 'Sign in';
@@ -27,17 +41,17 @@ function renderAuth() {
 $('authForm').onsubmit = async e => {
   e.preventDefault(); $('authSubmit').disabled = true; notice('');
   try {
-    const data = await api('/auth/'+mode,{method:'POST',body:JSON.stringify({email:$('email').value,password:$('password').value,name:$('name').value})});
+    const data = await api('/auth/'+mode,{method:'POST',body:JSON.stringify({email:$('email').value,password:$('password').value,name:$('name').value,captchaToken:captchaToken()})});
     $('password').value = '';
     if (data.confirmationRequired) { mode='login';renderAuth();notice(data.message); }
     else { user=data.user;await dashboard(); }
-  } catch(e) {notice(e.message,true);} finally {$('authSubmit').disabled=false;}
+  } catch(e) {notice(e.message,true);} finally {$('authSubmit').disabled=false;resetCaptcha();}
 };
 $('forgot').onclick = () => $('recovery').classList.toggle('hidden');
 $('requestCode').onclick = async () => {
   $('requestCode').disabled=true;
-  try { const data=await api('/auth/recover',{method:'POST',body:JSON.stringify({email:$('email').value})});notice(data.message); }
-  catch(e){notice(e.message,true);}finally{$('requestCode').disabled=false;}
+  try { const data=await api('/auth/recover',{method:'POST',body:JSON.stringify({email:$('email').value,captchaToken:captchaToken()})});notice(data.message); }
+  catch(e){notice(e.message,true);}finally{$('requestCode').disabled=false;resetCaptcha();}
 };
 $('resetForm').onsubmit=async e=>{
   e.preventDefault();$('resetSubmit').disabled=true;
@@ -110,4 +124,4 @@ async function saveAction(presentNow) {
 $('quizForm').onsubmit=e=>{e.preventDefault();saveAction(false);};$('present').onclick=()=>saveAction(true);
 $('preview').onclick=()=>{if(!$('quizForm').reportValidity())return;const q=readQuiz();$('previewContent').innerHTML=`<h3>${esc(q.title)}</h3><p>${esc(q.description)}</p><p>${q.questions.length} question${q.questions.length === 1 ? "" : "s"} · ${q.secondsPerQuestion} seconds per question</p>${q.questions.map((x,i)=>`<article class="preview-question"><h3>${i+1}. ${esc(x.q)}</h3><ol type="A">${x.options.map((o,j)=>`<li>${esc(o)}${j===x.answer?' <strong>✓ Correct answer</strong>':''}</li>`).join('')}</ol><p>${esc(x.source)}</p></article>`).join('')}`;$('previewDialog').showModal();};
 $('closePreview').onclick=()=>$('previewDialog').close();window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
-(async()=>{renderAuth();try{const config=await api('/config');if(!config.configured){screen('account');$('account').querySelectorAll('input,button').forEach(el=>el.disabled=true);notice('Creator accounts are being set up. Please check back soon.');return;}try{const me=await api('/me');user=me.user;await dashboard();}catch{screen('account');notice('');}}catch(e){screen('account');notice(e.message,true);}})();
+(async()=>{renderAuth();try{const config=await api('/config');loadCaptcha(config.turnstileSiteKey);if(!config.configured){screen('account');$('account').querySelectorAll('input,button').forEach(el=>el.disabled=true);notice('Creator accounts are being set up. Please check back soon.');return;}try{const me=await api('/me');user=me.user;await dashboard();}catch{screen('account');notice('');}}catch(e){screen('account');notice(e.message,true);}})();
