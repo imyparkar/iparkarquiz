@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="auth-pending">
 <header class="topbar">
   <a class="brand" href="https://iparkar.com/live-quiz/" aria-label="iParkar Learning — Live Quiz home">
     <img class="logo" src="brand/iparkar-mark-primary.svg" alt="iParkar Learning" width="36" height="36">
@@ -26,6 +26,8 @@
     <span class="chip hidden" id="roomChip">Room <b id="roomCode">—</b></span>
     <span class="chip"><span class="conn off" id="conn"></span><span id="connText">Offline</span></span>
     <button class="btn ghost small" id="fsBtn" title="Full screen">Full screen</button>
+    <span class="chip user-chip hidden" id="userChip" title=""><span class="avatar" id="userInitial" aria-hidden="true"></span><span id="userName"></span></span>
+    <button class="btn ghost small hidden" id="signOutBtn" type="button">Sign out</button>
     <button class="btn small end-session hidden" id="endSessionBtn" type="button" title="End this session and return to the quiz home page">End session</button>
   </div>
 </header>

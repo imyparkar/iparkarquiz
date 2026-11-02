@@ -64,3 +64,11 @@ The automated suite covers server validation, CSRF origin checks, cookies, succe
 - Failed result writes retry through the room alarm, and replay waits until results are saved.
 - Quizzes are private to their owner. Results contain participant names entered by participants. An administrator handles deletion/retention requests across D1 and Supabase. The existing main-site privacy policy should accurately describe these services and retention before public launch.
 - The library currently shows the latest 100 session/round records. No public quiz sharing, bulk question imports, image uploads or account deletion UI is included in this release.
+
+## iParkar sign-in for the Live HSE Quiz (Nov 2026)
+
+The HSE presenter (`/`) and room creation (`/api/rooms`) now require an iParkar account — the same Supabase account used by Custom Quiz and the LMS. Everyone signs in on the shared page at `/login` (email + password, password recovery, optional Google). Participants (`/play`, `/j/*`, `/ws/*`) still join with just a name.
+
+1. **Cloudflare Access:** remove the Access application (or policy) that covers `quiz.iparkar.com`, otherwise visitors see the Cloudflare login before the iParkar one.
+2. **Supabase redirect URLs:** in Authentication → URL Configuration add `https://quiz.iparkar.com/auth/callback` (needed for Google).
+3. **Google (optional):** create an OAuth client (Web application) in Google Cloud Console with authorised redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, then paste its Client ID and Secret into Supabase → Authentication → Sign In / Providers → Google and enable it. The "Continue with Google" button appears automatically within about five minutes of enabling the provider.

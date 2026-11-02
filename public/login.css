@@ -1,0 +1,87 @@
+/* iParkar Learning — shared sign-in page (Live HSE Quiz + Custom Quiz).
+   Uses the iParkar design-system tokens from style.css: paper canvas, midnight
+   panel, marigold highlight, action-blue primary, flat fills, hairline cards. */
+
+.login-page { display: flex; flex-direction: column; min-height: 100vh; }
+.login-wrap {
+  flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 48px 24px;
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: stretch;
+}
+
+/* ---- Left: brand panel ---- */
+.login-intro {
+  background: var(--midnight); color: var(--white); border-radius: var(--r-card);
+  padding: 44px 40px; display: flex; flex-direction: column;
+}
+.eyebrow-line { display: inline-flex; align-items: center; gap: 10px; color: var(--marigold); font-weight: 600; font-size: 15px; letter-spacing: .1px; }
+.eyebrow-line .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--marigold); }
+.login-intro h1 { font-size: clamp(36px, 5vw, 54px); line-height: 1.04; letter-spacing: -.04em; font-weight: 700; margin: 18px 0 16px; }
+.hl-pill { display: inline-block; padding: 0 .28em .06em; border-radius: var(--r-pill); background: var(--marigold); color: var(--ink); line-height: 1.1; }
+.login-intro .lead { font-family: var(--serif); font-size: 19px; line-height: 1.55; color: #dedfe8; margin: 0 0 28px; max-width: 34em; }
+.perks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.perks li { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: var(--r-button); background: rgba(255,255,255,.07); }
+.perks .ic { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--ink); }
+.perks .ic svg { width: 18px; height: 18px; }
+.perk-coral .ic { background: var(--coral); }
+.perk-marigold .ic { background: var(--marigold); }
+.perk-sky .ic { background: var(--sky-wash); }
+.perks b { display: block; color: var(--white); font-weight: 600; }
+.perks small { display: block; color: #c9cbdb; font-size: 14px; }
+.intro-note { margin: auto 0 0; padding-top: 28px; color: #c9cbdb; font-size: 14px; }
+.intro-note a { color: var(--marigold); font-weight: 500; }
+
+/* ---- Right: form card ---- */
+.login-card { padding: 40px 36px 28px; border-top: 8px solid var(--marigold); display: flex; flex-direction: column; justify-content: flex-start; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--paper); border-radius: 10px; margin-bottom: 26px; }
+.seg button { border: 0; background: transparent; border-radius: var(--r-button); padding: 9px 12px; font-size: 15px; font-weight: 500; color: var(--graphite); transition: background var(--ease), color var(--ease); }
+.seg button[aria-selected="true"] { background: var(--white); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px var(--hairline); }
+.login-card h2 { font-size: 28px; letter-spacing: -.02em; line-height: 1.2; margin: 0 0 6px; }
+.card-lead { color: var(--graphite); margin: 0 0 22px; }
+
+.btn.google {
+  width: 100%; padding: 12px 20px; font-size: 16px; text-decoration: none;
+  background: var(--white); color: var(--ink); border-color: var(--ink-20);
+}
+.btn.google:hover:not(:disabled) { background: var(--paper); }
+.or { display: flex; align-items: center; gap: 12px; color: var(--stone); font-size: 13px; margin: 18px 0; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--hairline); }
+
+.field { display: block; font-weight: 500; font-size: 15px; margin: 0 0 18px; }
+.field input {
+  display: block; width: 100%; margin-top: 7px; padding: 12px 14px; font: inherit; font-weight: 400;
+  color: var(--ink); background: var(--white); border: 1px solid var(--ink-20); border-radius: var(--r-button);
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+.field input::placeholder { color: var(--stone); }
+.field input:focus { outline: none; border-color: var(--action-blue); box-shadow: 0 0 0 3px rgba(0,117,222,.18); }
+.field input[aria-invalid="true"] { border-color: var(--vermillion); }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pw-wrap { position: relative; display: block; margin-top: 7px; }
+.pw-wrap input { padding-right: 70px; margin-top: 0; }
+.pw-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--action-blue); font-size: 14px; font-weight: 500; padding: 6px 10px; border-radius: var(--r-small); }
+.pw-toggle:hover { background: var(--sky-tint); }
+.link-btn { border: 0; background: none; padding: 0; color: var(--action-blue); font-size: 14px; font-weight: 500; }
+.link-btn:hover { text-decoration: underline; }
+.back-link { margin-top: 16px; }
+.btn.primary-wide { width: 100%; padding: 13px 20px; font-size: 16px; margin-top: 4px; }
+.btn.primary-wide:disabled { background: var(--action-blue); color: var(--white); opacity: .6; cursor: wait; border-color: transparent; }
+
+.notice { border: 1px solid var(--action-blue); background: var(--sky-tint); color: var(--ink-90); border-radius: var(--r-button); padding: 12px 14px; margin: 0 0 18px; font-size: 15px; }
+.notice.error { border-color: var(--coral); background: #fff0ed; }
+.captcha { margin: 4px 0 16px; min-height: 65px; }
+.legal { color: var(--graphite); font-size: 13px; margin: 22px 0 0; }
+.legal a { color: var(--action-blue); }
+
+.login-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; max-width: 1120px; width: 100%; margin: 0 auto; padding: 8px 24px 28px; color: var(--graphite); font-size: 14px; }
+.login-foot a { color: var(--graphite); }
+
+@media (max-width: 880px) {
+  .login-wrap { grid-template-columns: 1fr; padding: 24px 16px; }
+  .login-card { order: -1; padding: 28px 22px 22px; }
+  .login-intro { padding: 30px 24px; }
+  .login-intro h1 { font-size: 36px; }
+  .login-intro .lead { font-size: 17px; }
+  .intro-note { padding-top: 20px; }
+  .login-foot { justify-content: center; text-align: center; padding: 8px 16px 24px; }
+}
+.login-page .topbar a.btn { text-decoration: none; }

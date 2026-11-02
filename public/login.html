@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#02093a">
+<title>Sign in – iParkar Learning</title>
+<meta name="description" content="Sign in or create your free iParkar Learning account to present live quizzes.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400&display=swap">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="login.css">
+</head>
+<body class="login-page">
+<header class="topbar">
+  <a class="brand" href="https://iparkar.com/live-quiz/" aria-label="iParkar Learning — Live Quiz home">
+    <img class="logo" src="brand/iparkar-mark-primary.svg" alt="iParkar Learning" width="36" height="36">
+    <span class="wordmark">iParkar <span class="product">Learning</span></span>
+  </a>
+  <nav class="bar-actions" aria-label="Quiz navigation">
+    <a class="btn ghost small" href="play.html">Join a quiz</a>
+  </nav>
+</header>
+
+<main class="login-wrap">
+  <section class="login-intro" aria-labelledby="introTitle">
+    <div class="eyebrow-line"><span class="dot"></span><span id="introEyebrow">Live HSE Quiz</span></div>
+    <h1 id="introTitle">One iParkar <span class="hl-pill">account.</span></h1>
+    <p class="lead">Sign in once to run live quizzes for your crew, save your own quizzes and pick up where you left off — on any device.</p>
+    <ul class="perks">
+      <li class="perk-coral"><span class="ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></span>
+        <div><b>Live HSE Quiz</b><small>24 KOC HSSE procedures, 500 questions, live leaderboard</small></div></li>
+      <li class="perk-marigold"><span class="ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <div><b>Custom Quiz</b><small>Write, save and present your own questions</small></div></li>
+      <li class="perk-sky"><span class="ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg></span>
+        <div><b>Practice exams</b><small>The same account works on app.iparkar.com</small></div></li>
+    </ul>
+    <p class="intro-note">Taking part in a quiz? You don't need an account — <a href="play.html">join with a room code</a>.</p>
+  </section>
+
+  <section class="card login-card" aria-labelledby="cardTitle">
+    <div class="seg" role="tablist" aria-label="Account">
+      <button type="button" role="tab" id="tabLogin" aria-selected="true" data-mode="login">Sign in</button>
+      <button type="button" role="tab" id="tabSignup" aria-selected="false" data-mode="signup">Create account</button>
+    </div>
+
+    <h2 id="cardTitle">Welcome back</h2>
+    <p class="card-lead" id="cardLead">Sign in to present the Live HSE Quiz.</p>
+
+    <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
+
+    <div id="googleBox" class="hidden">
+      <a class="btn google" id="googleBtn" href="/auth/google">
+        <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        <span>Continue with Google</span>
+      </a>
+      <div class="or"><span>or use your email</span></div>
+    </div>
+
+    <form id="authForm" novalidate>
+      <label id="nameField" class="field hidden">Your name
+        <input id="name" maxlength="80" autocomplete="name" placeholder="e.g. Ahmed Al-Ali">
+      </label>
+      <label class="field">Email
+        <input id="email" type="email" required maxlength="254" autocomplete="email" placeholder="you@company.com">
+      </label>
+      <label class="field" id="passwordField">
+        <span class="label-row"><span>Password</span><button type="button" class="link-btn" id="forgotBtn">Forgot password?</button></span>
+        <span class="pw-wrap">
+          <input id="password" type="password" required minlength="8" maxlength="128" autocomplete="current-password" placeholder="At least 8 characters">
+          <button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password" aria-pressed="false">Show</button>
+        </span>
+      </label>
+      <div id="captcha" class="captcha hidden"></div>
+      <button class="btn primary-wide" id="submitBtn" type="submit">Sign in</button>
+    </form>
+
+    <!-- Password reset -->
+    <div id="resetBox" class="hidden">
+      <form id="codeForm" novalidate>
+        <label class="field">Email
+          <input id="resetEmail" type="email" required maxlength="254" autocomplete="email" placeholder="you@company.com">
+        </label>
+        <button class="btn primary-wide" id="codeBtn" type="submit">Send recovery code</button>
+      </form>
+      <form id="resetForm" class="hidden" novalidate>
+        <label class="field">Recovery code
+          <input id="recoveryCode" inputmode="numeric" pattern="[0-9]{6,10}" required autocomplete="one-time-code" placeholder="6-digit code from your email">
+        </label>
+        <label class="field">New password
+          <input id="newPassword" type="password" minlength="8" maxlength="128" required autocomplete="new-password" placeholder="At least 8 characters">
+        </label>
+        <button class="btn primary-wide" id="resetBtn" type="submit">Set new password and sign in</button>
+      </form>
+      <button type="button" class="link-btn back-link" id="backBtn">← Back to sign in</button>
+    </div>
+
+    <p class="legal" id="legal">By continuing, you agree to our <a href="https://iparkar.com/terms.html">Terms</a> and <a href="https://iparkar.com/privacy.html">Privacy Policy</a>.</p>
+  </section>
+</main>
+
+<footer class="login-foot">
+  <span>iParkar Learning · Train safe. Work safe.</span>
+  <span><a href="https://iparkar.com/privacy.html">Privacy</a> · <a href="https://iparkar.com/contact/">Help</a></span>
+</footer>
+
+<script src="common.js"></script>
+<script src="login.js"></script>
+</body>
+</html>

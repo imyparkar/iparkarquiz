@@ -15,8 +15,7 @@ function withCaptcha(payload, token) {
   if (typeof token === 'string' && token && token.length <= 4096) payload.gotrue_meta_security = { captcha_token: token };
   return payload;
 }
-function sessionReply(data, session, request) {
-  const res = reply(data);
+function sessionReply(data, session, request, res = reply(data)) {
   const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
   const suffix = `; HttpOnly; SameSite=Lax; Path=/${secure}`;
   res.headers.append('set-cookie', `${cookieName}=${session?.access_token || ''}; Max-Age=${session ? Math.min(session.expires_in || 3600, 86400) : 0}${suffix}`);
@@ -58,7 +57,7 @@ export function validateQuiz(raw) {
   });
   return { title, description, questions, secondsPerQuestion: seconds };
 }
-async function currentUser(request, env) {
+export async function currentUser(request, env) {
   const token = cookies(request)[cookieName];
   if (!token) return null;
   const r = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: { ...authHeaders(env), Authorization: `Bearer ${token}` } });
@@ -66,12 +65,15 @@ async function currentUser(request, env) {
 }
 async function profile(env, user, signIn = false) {
   const now = Date.now();
-  await env.DB.prepare('INSERT INTO profiles (id,email,display_name,created_at,last_sign_in_at) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET email=excluded.email, last_sign_in_at=COALESCE(excluded.last_sign_in_at,profiles.last_sign_in_at)').bind(user.id, user.email || '', String(user.user_metadata?.display_name || '').slice(0, 80), now, signIn ? now : null).run();
+  await env.DB.prepare('INSERT INTO profiles (id,email,display_name,created_at,last_sign_in_at) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET email=excluded.email, last_sign_in_at=COALESCE(excluded.last_sign_in_at,profiles.last_sign_in_at)').bind(user.id, user.email || '', String(user.user_metadata?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || '').slice(0, 80), now, signIn ? now : null).run();
   if (signIn) await env.DB.prepare('INSERT INTO sign_in_events (id,user_id,occurred_at) VALUES (?,?,?)').bind(crypto.randomUUID(), user.id, now).run();
 }
 export async function customApi(request, env) {
   const url = new URL(request.url), path = url.pathname, method = request.method;
-  if (path === '/api/custom/config') return reply({ configured: !!(env.DB && env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY), turnstileSiteKey: env.TURNSTILE_SITE_KEY || '' });
+  if (path === '/api/custom/config') {
+    const configured = !!(env.DB && env.SUPABASE_URL && env.SUPABASE_PUBLISHABLE_KEY);
+    return reply({ configured, turnstileSiteKey: env.TURNSTILE_SITE_KEY || '', google: configured ? await googleEnabled(env) : false });
+  }
   if (!env.DB || !env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) return reply({ error: 'Creator accounts are being set up. Please try again later.' }, 503);
   if (method !== 'GET' && request.headers.get('origin') !== url.origin) return reply({ error: 'Request origin is not allowed.' }, 403);
   try {
@@ -184,4 +186,64 @@ export async function customApi(request, env) {
     console.error('Custom quiz request failed', error.name);
     return reply({ error:'Could not complete this request. Please try again.' },500);
   }
+}
+
+// ---------- Sign in with Google (Supabase OAuth, PKCE flow handled on the server) ----------
+// Requires: Supabase → Authentication → Sign In / Providers → Google enabled, and
+// https://quiz.iparkar.com/auth/callback listed under Authentication → URL Configuration → Redirect URLs.
+let googleCache = { at: 0, on: false };
+export async function googleEnabled(env) {
+  if (Date.now() - googleCache.at < 300000) return googleCache.on;
+  try {
+    const r = await fetch(`${env.SUPABASE_URL}/auth/v1/settings`, { headers: authHeaders(env) });
+    const s = r.ok ? await r.json() : null;
+    googleCache = { at: Date.now(), on: !!s?.external?.google };
+  } catch { googleCache = { at: Date.now(), on: false }; }
+  return googleCache.on;
+}
+// Only same-site paths are allowed as a destination after sign-in.
+export function safeNext(value) {
+  const v = String(value || '');
+  return /^\/(?![\/\\])[\w\-./?=&%#]*$/.test(v) && !v.startsWith('/login') && !v.startsWith('/auth/') ? v : '/';
+}
+const b64url = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function tempCookie(request, name, value, maxAge) {
+  const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
+  return `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax; Path=/auth/${secure}`;
+}
+export async function authRoutes(request, env) {
+  const url = new URL(request.url);
+  const loginUrl = (next, error) => `${url.origin}/login?next=${encodeURIComponent(next)}${error ? '&error=' + error : ''}`;
+  if (!env.DB || !env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) return Response.redirect(loginUrl('/', 'setup'), 302);
+  if (url.pathname === '/auth/google') {
+    const next = safeNext(url.searchParams.get('next'));
+    const verifier = b64url(crypto.getRandomValues(new Uint8Array(48)));
+    const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+    const target = `${env.SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(url.origin + '/auth/callback')}&code_challenge=${challenge}&code_challenge_method=s256`;
+    const res = new Response(null, { status: 302, headers: { location: target, 'cache-control': 'no-store' } });
+    res.headers.append('set-cookie', tempCookie(request, 'ipq_pkce', verifier, 600));
+    res.headers.append('set-cookie', tempCookie(request, 'ipq_next', next, 600));
+    return res;
+  }
+  if (url.pathname === '/auth/callback') {
+    const c = cookies(request);
+    const next = safeNext(decodeURIComponent(c.ipq_next || '/'));
+    const code = url.searchParams.get('code');
+    const fail = reason => {
+      const res = new Response(null, { status: 302, headers: { location: loginUrl(next, reason), 'cache-control': 'no-store' } });
+      res.headers.append('set-cookie', tempCookie(request, 'ipq_pkce', '', 0));
+      res.headers.append('set-cookie', tempCookie(request, 'ipq_next', '', 0));
+      return res;
+    };
+    if (!code || !c.ipq_pkce) return fail('google');
+    const r = await fetch(`${env.SUPABASE_URL}/auth/v1/token?grant_type=pkce`, { method: 'POST', headers: authHeaders(env), body: JSON.stringify({ auth_code: code, code_verifier: decodeURIComponent(c.ipq_pkce) }) });
+    const data = r.ok ? await r.json() : null;
+    if (!data?.access_token || !data.user) return fail('google');
+    await profile(env, data.user, true);
+    const res = new Response(null, { status: 302, headers: { location: url.origin + next, 'cache-control': 'no-store' } });
+    res.headers.append('set-cookie', tempCookie(request, 'ipq_pkce', '', 0));
+    res.headers.append('set-cookie', tempCookie(request, 'ipq_next', '', 0));
+    return sessionReply(null, data, request, res);
+  }
+  return new Response('Not found', { status: 404 });
 }
