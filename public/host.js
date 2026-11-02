@@ -92,14 +92,39 @@ function renderQR(text) {
   $("qr").innerHTML = qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true });
 }
 
+// ---- iParkar account: the presenter must be signed in ----
+function toLogin() {
+  location.replace("/login?next=" + encodeURIComponent(location.pathname + location.search));
+}
+async function refreshSession() {
+  try { return (await fetch("/api/custom/auth/refresh", { method: "POST" })).ok; } catch { return false; }
+}
+async function requireAccount() {
+  let r = await fetch("/api/custom/me");
+  if (r.status === 401 && await refreshSession()) r = await fetch("/api/custom/me");
+  if (r.status === 401) { toLogin(); return false; }
+  if (!r.ok) return null; // accounts not configured or temporarily unavailable; the server still guards room creation
+  const { user } = await r.json();
+  const label = user.name || user.email || "Signed in";
+  $("userName").textContent = label;
+  $("userInitial").textContent = label.trim().charAt(0).toUpperCase();
+  $("userChip").title = user.email || "";
+  $("userChip").classList.remove("hidden");
+  $("signOutBtn").classList.remove("hidden");
+  return user;
+}
+
 async function createRoom() {
   $("createBtn").disabled = true;
   try {
-    const r = await fetch("/api/rooms", {
+    const post = () => fetch("/api/rooms", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ refs: [...selected], difficulty: level }),
     });
+    let r = await post();
+    if (r.status === 401 && await refreshSession()) r = await post();
+    if (r.status === 401) { toLogin(); return; }
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "Failed");
     store("local", "hseq_host_code", d.code);
@@ -437,6 +462,12 @@ $("endSessionBtn").onclick = () => {
   if (!sock || !sock.send({ t: "end_session" })) return leaveToHome();
   setTimeout(leaveToHome, 2500); // fallback if the confirmation never arrives
 };
+$("signOutBtn").onclick = async () => {
+  if (state && state.phase !== "final" && !confirm("Sign out? Your current session will keep running and can be resumed after you sign in again.")) return;
+  try { await fetch("/api/custom/auth/logout", { method: "POST" }); } catch {}
+  if (sock) sock.close();
+  location.replace("/login");
+};
 $("topics").addEventListener("change", (e) => {
   const cb = e.target;
   if (cb.type !== "checkbox") return;
@@ -469,6 +500,10 @@ document.addEventListener("keydown", (e) => {
 });
 
 const customLaunch = new URLSearchParams(location.search).get("custom") === "1";
+(async () => {
+const account = await requireAccount().catch(() => null);
+if (account === false) return; // on the way to the sign-in page
+document.body.classList.remove("auth-pending");
 if (!customLaunch) loadCatalog();
 
 const prev = customLaunch ? (() => {
@@ -485,3 +520,4 @@ if (customLaunch) {
   if (prev?.code && prev?.key) connect(prev.code, prev.key);
   else location.replace("custom.html");
 }
+})();

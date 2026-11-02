@@ -1,10 +1,10 @@
-let user = null, quizId = null, dirty = false, mode = new URLSearchParams(location.search).get('mode') === 'signup' ? 'signup' : 'login';
+let user = null, quizId = null, dirty = false;
 // Email confirmation may return a fragment; never retain its tokens in browser history.
 if (location.hash) history.replaceState(null,'',location.pathname + location.search);
 let sessionRows = [];
 const blankQuestion = () => ({q:'',options:['','','',''],answer:-1,source:''});
 function notice(message, error = false) { $('notice').textContent = message; $('notice').classList.toggle('error',error); $('notice').classList.toggle('hidden',!message); }
-function screen(id) { ['loading','account','dashboard','editor'].forEach(key => $(key).classList.toggle('hidden',key !== id)); }
+function screen(id) { ['loading','dashboard','editor'].forEach(key => $(key).classList.toggle('hidden',key !== id)); }
 async function api(path, options = {}, retry = true) {
   const r = await fetch('/api/custom' + path, { ...options, headers:{'content-type':'application/json',...options.headers} });
   if (r.status === 401 && retry && !path.startsWith('/auth/')) {
@@ -12,55 +12,17 @@ async function api(path, options = {}, retry = true) {
     if (refresh.ok) return api(path,options,false);
   }
   const data = await r.json();
-  if (!r.ok) { if (r.status === 401 && !path.startsWith('/auth/')) { user = null; $('logout').classList.add('hidden'); screen('account'); renderAuth(); } throw new Error(data.error || 'Please try again.'); }
+  if (!r.ok) { if (r.status === 401 && !path.startsWith('/auth/')) { user = null; toLogin(); } throw new Error(data.error || 'Please try again.'); }
   return data;
 }
-// Cloudflare Turnstile, shown only when the server provides a site key (Supabase CAPTCHA protection on).
-let captchaId = null;
-function loadCaptcha(siteKey) {
-  if (!siteKey) return;
-  window.onTurnstileLoad = () => { $('captcha').classList.remove('hidden'); captchaId = turnstile.render('#captcha', { sitekey: siteKey }); };
-  const s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad'; s.async = true; document.head.append(s);
+// Sign-in, sign-up and password recovery live on the shared iParkar sign-in page.
+function toLogin() {
+  const m = new URLSearchParams(location.search).get('mode') === 'signup' ? '&mode=signup' : '';
+  location.replace('/login?next=' + encodeURIComponent('/custom.html') + m);
 }
-function captchaToken() {
-  if (captchaId === null) return undefined;
-  const token = turnstile.getResponse(captchaId);
-  if (!token) throw new Error('Please complete the security check, then try again.');
-  return token;
-}
-function resetCaptcha() { if (captchaId !== null) turnstile.reset(captchaId); }
-function renderAuth() {
-  const signup = mode === 'signup';
-  $('authHeading').textContent = signup ? 'Create your free account' : 'Sign in';
-  $('authLead').textContent = signup ? 'Save your quizzes and present them whenever you need.' : 'Welcome back. Your saved quizzes are waiting.';
-  $('nameField').classList.toggle('hidden',!signup); $('password').autocomplete = signup ? 'new-password' : 'current-password';
-  $('authSubmit').textContent = signup ? 'Create account' : 'Sign in';
-  $('authSwitch').innerHTML = signup ? 'Already have an account? <button class="btn ghost small" type="button" id="switchMode">Sign in</button>' : 'New here? <button class="btn ghost small" type="button" id="switchMode">Create a free account</button>';
-  $('switchMode').onclick = () => {mode = signup ? 'login' : 'signup';renderAuth();};
-}
-$('authForm').onsubmit = async e => {
-  e.preventDefault(); $('authSubmit').disabled = true; notice('');
-  try {
-    const data = await api('/auth/'+mode,{method:'POST',body:JSON.stringify({email:$('email').value,password:$('password').value,name:$('name').value,captchaToken:captchaToken()})});
-    $('password').value = '';
-    if (data.confirmationRequired) { mode='login';renderAuth();notice(data.message); }
-    else { user=data.user;await dashboard(); }
-  } catch(e) {notice(e.message,true);} finally {$('authSubmit').disabled=false;resetCaptcha();}
-};
-$('forgot').onclick = () => $('recovery').classList.toggle('hidden');
-$('requestCode').onclick = async () => {
-  $('requestCode').disabled=true;
-  try { const data=await api('/auth/recover',{method:'POST',body:JSON.stringify({email:$('email').value,captchaToken:captchaToken()})});notice(data.message); }
-  catch(e){notice(e.message,true);}finally{$('requestCode').disabled=false;resetCaptcha();}
-};
-$('resetForm').onsubmit=async e=>{
-  e.preventDefault();$('resetSubmit').disabled=true;
-  try {const data=await api('/auth/reset',{method:'POST',body:JSON.stringify({email:$('email').value,code:$('recoveryCode').value,password:$('newPassword').value})});user=data.user;$('newPassword').value='';$('recoveryCode').value='';await dashboard();}
-  catch(e){notice(e.message,true);}finally{$('resetSubmit').disabled=false;}
-};
 $('logout').onclick = async () => {
   if (!mayLeave()) return;
-  try { await api('/auth/logout',{method:'POST'}); user=null;dirty=false;sessionStorage.removeItem('ipq_launch');$('logout').classList.add('hidden');screen('account');renderAuth();notice('You have signed out.'); }
+  try { await api('/auth/logout',{method:'POST'}); user=null;dirty=false;sessionStorage.removeItem('ipq_launch');location.replace('/login?next=' + encodeURIComponent('/custom.html')); }
   catch(e) {notice(e.message,true);}
 };
 async function dashboard() {
@@ -124,4 +86,4 @@ async function saveAction(presentNow) {
 $('quizForm').onsubmit=e=>{e.preventDefault();saveAction(false);};$('present').onclick=()=>saveAction(true);
 $('preview').onclick=()=>{if(!$('quizForm').reportValidity())return;const q=readQuiz();$('previewContent').innerHTML=`<h3>${esc(q.title)}</h3><p>${esc(q.description)}</p><p>${q.questions.length} question${q.questions.length === 1 ? "" : "s"} · ${q.secondsPerQuestion} seconds per question</p>${q.questions.map((x,i)=>`<article class="preview-question"><h3>${i+1}. ${esc(x.q)}</h3><ol type="A">${x.options.map((o,j)=>`<li>${esc(o)}${j===x.answer?' <strong>✓ Correct answer</strong>':''}</li>`).join('')}</ol><p>${esc(x.source)}</p></article>`).join('')}`;$('previewDialog').showModal();};
 $('closePreview').onclick=()=>$('previewDialog').close();window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
-(async()=>{renderAuth();try{const config=await api('/config');loadCaptcha(config.turnstileSiteKey);if(!config.configured){screen('account');$('account').querySelectorAll('input,button').forEach(el=>el.disabled=true);notice('Creator accounts are being set up. Please check back soon.');return;}try{const me=await api('/me');user=me.user;await dashboard();}catch{screen('account');notice('');}}catch(e){screen('account');notice(e.message,true);}})();
+(async()=>{try{const config=await api('/config');if(!config.configured){screen('loading');notice('Creator accounts are being set up. Please check back soon.');return;}try{const me=await api('/me');user=me.user;await dashboard();}catch{/* api() sends signed-out visitors to the sign-in page */}}catch(e){notice(e.message,true);}})();

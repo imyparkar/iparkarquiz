@@ -4,7 +4,7 @@
 // presenter screen always agree, and correct answers never reach participants early.
 
 import BANK from "./questions.json";
-import { customApi } from "./custom.js";
+import { customApi, currentUser, authRoutes } from "./custom.js";
 
 // ---- Quiz settings (change here if needed) ----
 const SETTINGS = {
@@ -160,8 +160,14 @@ export default {
     if (url.pathname === "/present") return env.ASSETS.fetch(new Request(new URL("/", url), request));
 
     if (url.pathname.startsWith("/api/custom/")) return customApi(request, env);
+    if (url.pathname.startsWith("/auth/")) return authRoutes(request, env);
 
     if (url.pathname === "/api/rooms" && request.method === "POST") {
+      // Live HSE Quiz presenters sign in with their iParkar account (same login as Custom Quiz and the LMS).
+      if (request.headers.get("origin") !== url.origin) return json({ error: "Request origin is not allowed." }, 403);
+      if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) return json({ error: "Sign-in is being set up. Please try again later." }, 503);
+      const user = await currentUser(request, env);
+      if (!user) return json({ error: "Please sign in to continue." }, 401);
       let body = {};
       try { body = await request.json(); } catch {}
       const config = normaliseConfig(body);

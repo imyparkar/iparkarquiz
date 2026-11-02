@@ -429,3 +429,10 @@ a { color: var(--action-blue); }
 .confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
 .ended-mark { width: 64px; height: 64px; margin: 8px auto 18px; display: block; }
 #p-ended .btn { text-decoration: none; margin-top: 8px; }
+
+/* ---------- Signed-in presenter ---------- */
+body.auth-pending [data-screen] { visibility: hidden; }
+.user-chip { max-width: 220px; }
+.user-chip #userName { overflow: hidden; text-overflow: ellipsis; }
+.user-chip .avatar { display: grid; place-items: center; width: 22px; height: 22px; margin-left: -6px; border-radius: 50%; background: var(--marigold); color: var(--ink); font-size: 12px; font-weight: 700; flex: none; }
+@media (max-width: 900px) { .user-chip { display: none !important; } }

@@ -67,13 +67,45 @@ test('anonymous requests rejected; quiz CRUD, owner isolation and results surviv
   sessions=await (await customApi(request('/sessions'),env)).json();assert.equal(sessions.sessions[0].quiz_id,null);assert.equal(sessions.sessions[0].results.total,1);
 });
 test('HSE engine still draws 20 questions, hides keys until reveal, keeps 40-second timer',async()=>{
-  const env=environment();const r=await worker.fetch(new Request('https://quiz.test/api/rooms',{method:'POST',body:'{}'}),env);assert.equal(r.status,200);
+  const env=environment();const r=await worker.fetch(new Request('https://quiz.test/api/rooms',{method:'POST',body:'{}',headers:{cookie:'ipq_access=alice',origin:'https://quiz.test'}}),env);assert.equal(r.status,200);
   const room=await r.json();const state=env.rooms.get(room.code).room;state.s.players.test={name:'Player',score:0,correct:0,timeMs:0,answers:{}};
   await state.handleHost({send(){}},{t:'start'});assert.equal(state.s.questions.length,20);assert.equal(state.s.qDeadline-state.s.qStart,40000);assert.equal(state.playerView('test').question.answer,undefined);
 });
+test('Live HSE Quiz rooms need a signed-in iParkar account from this site',async()=>{
+  const env=environment();
+  const post=(headers)=>worker.fetch(new Request('https://quiz.test/api/rooms',{method:'POST',body:'{}',headers}),env);
+  assert.equal((await post({origin:'https://quiz.test'})).status,401);
+  assert.equal((await post({cookie:'ipq_access=expired',origin:'https://quiz.test'})).status,401);
+  assert.equal((await post({cookie:'ipq_access=alice',origin:'https://evil.test'})).status,403);
+  assert.equal((await post({cookie:'ipq_access=alice',origin:'https://quiz.test'})).status,200);
+  assert.equal((await worker.fetch(new Request('https://quiz.test/api/rooms',{method:'POST',body:'{}',headers:{cookie:'ipq_access=alice',origin:'https://quiz.test'}}),{...env,SUPABASE_URL:''})).status,503);
+});
+test('sign-in redirects only go to pages on this site',async()=>{
+  const { safeNext }=await import('../src/custom.js');
+  for (const ok of ['/','/custom.html','/present?custom=1','/custom.html?mode=signup']) assert.equal(safeNext(ok),ok);
+  for (const bad of ['https://evil.test','//evil.test','/\\evil.test','/login.html','/auth/google','javascript:alert(1)','']) assert.equal(safeNext(bad),'/');
+});
+test('Google sign-in starts a PKCE flow and completes with session cookies',async()=>{
+  const env=environment();const { authRoutes }=await import('../src/custom.js');
+  const start=await authRoutes(new Request('https://quiz.test/auth/google?next=%2Fcustom.html'),env);
+  assert.equal(start.status,302);const loc=new URL(start.headers.get('location'));
+  assert.equal(loc.origin+loc.pathname,'https://auth.test/auth/v1/authorize');assert.equal(loc.searchParams.get('provider'),'google');
+  assert.equal(loc.searchParams.get('redirect_to'),'https://quiz.test/auth/callback');assert.equal(loc.searchParams.get('code_challenge_method'),'s256');
+  const verifier=decodeURIComponent(start.headers.get('set-cookie').match(/ipq_pkce=([^;]+)/)[1]);
+  const prev=globalThis.fetch;let exchanged=null;
+  globalThis.fetch=async(url,o={})=>{if(String(url).includes('grant_type=pkce')){exchanged=JSON.parse(o.body);return new Response(JSON.stringify({access_token:'alice',refresh_token:'r',expires_in:3600,user:{id:'alice',email:'alice@example.com',user_metadata:{full_name:'Alice G'}}}));}return prev(url,o);};
+  try{
+    const done=await authRoutes(new Request('https://quiz.test/auth/callback?code=abc',{headers:{cookie:`ipq_pkce=${encodeURIComponent(verifier)}; ipq_next=%2Fcustom.html`}}),env);
+    assert.equal(done.status,302);assert.equal(done.headers.get('location'),'https://quiz.test/custom.html');
+    assert.deepEqual(exchanged,{auth_code:'abc',code_verifier:verifier});assert.match(done.headers.get('set-cookie'),/ipq_access=alice/);
+    assert.equal(env.DB.raw.prepare('SELECT display_name FROM profiles WHERE id=?').get('alice').display_name,'Alice G');
+    const missing=await authRoutes(new Request('https://quiz.test/auth/callback?code=abc'),env);
+    assert.match(missing.headers.get('location'),/\/login\?next=%2F&error=google/);
+  }finally{globalThis.fetch=prev;}
+});
 test('missing setup returns clear unavailable response without affecting HSE routes',async()=>{
   assert.equal((await customApi(request('/quizzes'),{})).status,503);
-  assert.deepEqual(await (await customApi(request('/config'),{})).json(),{configured:false,turnstileSiteKey:''});
+  assert.deepEqual(await (await customApi(request('/config'),{})).json(),{configured:false,turnstileSiteKey:'',google:false});
 });
 test('failed result writes retry and prevent replay until the saved round is archived',async()=>{
   const env=environment();const id=(await (await customApi(request('/quizzes','POST',quiz),env)).json()).id;
@@ -97,7 +129,7 @@ test('sign-up requests email confirmation, recovery hides account existence, log
 
 test('quiz sign-up and recovery emails return to the quiz; CAPTCHA token is forwarded when present',async()=>{
   const env={...environment(),TURNSTILE_SITE_KEY:'site-key'};authCalls=[];
-  assert.equal((await (await customApi(request('/config'),env)).json()).turnstileSiteKey,'site-key');
+  assert.equal((await (await customApi(request('/config'),env)).json()).turnstileSiteKey,'site-key');authCalls=[];
   await customApi(request('/auth/signup','POST',{email:'new@example.test',password:'password123',captchaToken:'tok-1'},null),env);
   await customApi(request('/auth/recover','POST',{email:'new@example.test',captchaToken:'tok-2'},null),env);
   await customApi(request('/auth/login','POST',{email:'alice@example.com',password:'password123'},null),env);
