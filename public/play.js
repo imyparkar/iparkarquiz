@@ -33,6 +33,8 @@ function connect(name) {
       } else if (m.t === "error") {
         toast(m.message);
         if (!joined) { sock.close(); show("p-join"); $("joinBtn").disabled = false; }
+      } else if (m.t === "ended") {
+        showEnded();
       } else if (m.t === "kicked") {
         store("local", pidKey(), null);
         toast("You were removed from the quiz by the presenter.");
@@ -53,6 +55,7 @@ function connect(name) {
 
 function render() {
   const s = state;
+  if (s.phase !== "final") celebrated = false;
   if (s.phase === "lobby") {
     show("p-lobby"); stopTick();
     $("lobbyCount").textContent = s.playerCount;
@@ -116,10 +119,21 @@ function startTick() {
 }
 function stopTick() { clearInterval(tick); tick = null; }
 
+let celebrated = false; // confetti once each time the winners screen opens
+function showEnded() {
+  if (sock) sock.close();
+  sock = null; stopTick();
+  store("local", pidKey(), null);
+  $("conn").classList.add("off");
+  $("footer").textContent = "";
+  show("p-ended");
+}
+
 function renderFinal() {
   show("p-final"); stopTick();
   const s = state;
   const rank = s.me?.rank;
+  if (!celebrated) { celebrated = true; setTimeout(() => celebrate(), 250); }
   $("fRank").textContent = rank ? `#${rank}` : "–";
   $("fScore").textContent = (s.me?.score || 0).toLocaleString();
   const medals = ["1st", "2nd", "3rd"];

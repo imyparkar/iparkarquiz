@@ -127,6 +127,7 @@ function connect(code, key) {
       failures = 0;
       if (m.t === "state") { state = m; render(); }
       if (m.t === "error") toast(m.message);
+      if (m.t === "session_ended") leaveToHome();
     },
     onStatus: (on) => {
       $("conn").classList.toggle("off", !on);
@@ -145,6 +146,7 @@ function connect(code, key) {
 
 function render() {
   const s = state;
+  if (s.phase !== "final") celebrated = false;
   if (s.config?.custom) {
     document.title = `${s.config.title} – iParkar Learning`;
     $("againBtn").textContent = "Play this quiz again";
@@ -259,9 +261,11 @@ function startTick() {
 }
 function stopTick() { clearInterval(tickTimer); tickTimer = null; }
 
+let celebrated = false; // confetti once each time the winners screen opens
 function renderFinal() {
   show("s-final");
   stopTick();
+  if (!celebrated) { celebrated = true; setTimeout(() => celebrate(), 250); }
   const ps = state.players;
   const top = ps.slice(0, 3);
   const order = [1, 0, 2]; // 2nd, 1st, 3rd
@@ -414,14 +418,24 @@ $("newRoomBtn").onclick = () => {
   $("conn").classList.add("off"); $("connText").textContent = "Offline";
   show("s-start");
 };
-// "End session" leaves the current session and returns to the quiz home page.
-$("endSessionBtn").onclick = () => {
-  if (!confirm("End this session and return to the quiz home page?")) return;
+// "End session" closes the room for everyone (phones show "This session has ended")
+// and returns the presenter to the quiz home page.
+let ending = false;
+function leaveToHome() {
   if (sock) sock.close();
   sock = null; state = null;
   store("local", "hseq_host_code", null); store("local", "hseq_host_key", null);
   store("session", "ipq_launch", null);
   location.href = "/";
+}
+$("endSessionBtn").onclick = () => {
+  if (ending) return;
+  if (!confirm("End this session for everyone and return to the quiz home page?")) return;
+  ending = true;
+  $("endSessionBtn").disabled = true;
+  $("endSessionBtn").textContent = "Ending…";
+  if (!sock || !sock.send({ t: "end_session" })) return leaveToHome();
+  setTimeout(leaveToHome, 2500); // fallback if the confirmation never arrives
 };
 $("topics").addEventListener("change", (e) => {
   const cb = e.target;

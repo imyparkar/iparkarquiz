@@ -254,6 +254,16 @@ export class QuizRoom {
     if (request.headers.get("Upgrade") === "websocket") {
       if (!this.s) return new Response("Room not found", { status: 404 });
       const role = url.searchParams.get("role") === "host" ? "host" : "player";
+      if (this.s.ended) {
+        // The presenter ended this session: tell late or reconnecting phones, then close.
+        if (role === "host") return new Response("Session ended", { status: 410 });
+        const pair = new WebSocketPair();
+        const [client, server] = Object.values(pair);
+        server.accept();
+        server.send(JSON.stringify({ t: "ended", now: Date.now() }));
+        server.close(4001, "session ended");
+        return new Response(null, { status: 101, webSocket: client });
+      }
       if (role === "host" && url.searchParams.get("key") !== this.s.hostKey) {
         return new Response("Forbidden", { status: 403 });
       }
@@ -271,7 +281,7 @@ export class QuizRoom {
 
   // ---------- WebSocket events (hibernation API) ----------
   async webSocketMessage(ws, raw) {
-    if (!this.s) return;
+    if (!this.s || this.s.ended) return;
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
     const att = ws.deserializeAttachment() || {};
@@ -323,6 +333,21 @@ export class QuizRoom {
         await this.ctx.storage.deleteAlarm();
         await this.save();
         this.broadcast();
+        return;
+      case "end_session":
+        // Save custom-quiz results if a finished round is still pending, then close the room for everyone.
+        if (s.archivePending) await this.archiveResults();
+        s.ended = true;
+        s.endedAt = Date.now();
+        if (s.phase === "question" || s.phase === "reveal") await this.ctx.storage.deleteAlarm();
+        await this.save();
+        for (const w of this.ctx.getWebSockets()) {
+          const a = w.deserializeAttachment() || {};
+          try {
+            w.send(JSON.stringify({ t: a.role === "host" ? "session_ended" : "ended", now: Date.now() }));
+            w.close(4001, "session ended");
+          } catch {}
+        }
         return;
       case "kick":
         if (s.players[msg.pid]) {
@@ -443,6 +468,7 @@ export class QuizRoom {
   }
 
   async alarm() {
+    if (this.s?.ended && !this.s.archivePending) return;
     if (this.s?.phase === "final" && this.s.archivePending) {
       await this.archiveResults();
       await this.save();
