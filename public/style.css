@@ -105,6 +105,8 @@ a { color: var(--action-blue); }
 .pill.outline { background: transparent; color: var(--ink-90); border-color: var(--ink-90); border-radius: var(--r-small); padding: 6px 12px; font-size: 14px; }
 .pill.outline:hover { background: var(--paper); }
 .btn.small { padding: 6px 12px; font-size: 14px; }
+.btn.end-session { background: transparent; color: var(--vermillion); border-color: var(--vermillion); }
+.btn.end-session:hover:not(:disabled) { background: var(--vermillion); color: var(--white); }
 .btn.wide, .pill.wide { width: 100%; }
 .pill.filled { padding: 13px 20px; font-size: 16px; }
 

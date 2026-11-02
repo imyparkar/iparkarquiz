@@ -116,6 +116,7 @@ function connect(code, key) {
   if (sock) sock.close();
   $("roomCode").textContent = code;
   $("roomChip").classList.remove("hidden");
+  $("endSessionBtn").classList.remove("hidden");
   $("bigCode").textContent = code;
   joinCode = code;
   $("joinUrl").textContent = joinLink(code);
@@ -134,6 +135,7 @@ function connect(code, key) {
         sock.close();
         store("local", "hseq_host_code", null);
         store("local", "hseq_host_key", null);
+        $("endSessionBtn").classList.add("hidden");
         toast("That session is no longer available. Create a new one.");
         show("s-start");
       }
@@ -407,9 +409,19 @@ $("newRoomBtn").onclick = () => {
   sock = null; state = null;
   store("local", "hseq_host_code", null); store("local", "hseq_host_key", null);
   $("roomChip").classList.add("hidden");
+  $("endSessionBtn").classList.add("hidden");
   $("resumeBox").classList.add("hidden");
   $("conn").classList.add("off"); $("connText").textContent = "Offline";
   show("s-start");
+};
+// "End session" leaves the current session and returns to the quiz home page.
+$("endSessionBtn").onclick = () => {
+  if (!confirm("End this session and return to the quiz home page?")) return;
+  if (sock) sock.close();
+  sock = null; state = null;
+  store("local", "hseq_host_code", null); store("local", "hseq_host_key", null);
+  store("session", "ipq_launch", null);
+  location.href = "/";
 };
 $("topics").addEventListener("change", (e) => {
   const cb = e.target;
