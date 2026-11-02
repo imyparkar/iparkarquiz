@@ -424,3 +424,8 @@ a { color: var(--action-blue); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .hl .ecg path { stroke-dashoffset: 0; }
 }
+
+/* ---------- Confetti + session ended ---------- */
+.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+.ended-mark { width: 64px; height: 64px; margin: 8px auto 18px; display: block; }
+#p-ended .btn { text-decoration: none; margin-top: 8px; }
