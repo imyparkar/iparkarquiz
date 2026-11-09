@@ -1,0 +1,45 @@
+/* iParkar Learning — main site header, mirrored from iparkar.com (styles.css)
+   so quiz.iparkar.com pages share the same header size, brand and nav. */
+.site-nav {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--white); box-shadow: var(--shadow-nav);
+}
+.site-nav__inner {
+  max-width: 1440px; margin: 0 auto; height: 64px; padding: 0 24px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+}
+.site-nav .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); justify-self: start; }
+.site-nav .brand img { width: 36px; height: 36px; display: block; flex: 0 0 auto; }
+.site-nav .brand__name { font-weight: 700; font-size: 18px; letter-spacing: -0.3px; white-space: nowrap; }
+.site-nav .brand__name span { display: block; font-weight: 400; font-size: 12px; line-height: 1; color: var(--graphite); }
+.site-nav .nav-links { display: flex; gap: 4px; justify-content: center; }
+.site-nav .nav-actions { justify-self: end; display: flex; gap: 12px; align-items: center; }
+
+.site-nav .ip-nav-link {
+  display: inline-block; font-size: 14px; line-height: 1.43; font-weight: 500;
+  padding: 12px; border-radius: 8px;
+  color: var(--ink-54); text-decoration: none; transition: color 200ms ease; white-space: nowrap;
+}
+.site-nav .ip-nav-link:hover { color: var(--ink); }
+.site-nav .ip-nav-link[aria-current="page"] { color: var(--action-blue); }
+
+.site-nav .nav-signin-link {
+  padding: 8px 4px; font: inherit; font-size: 14px; font-weight: 500; color: var(--ink-54);
+  background: none; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap; transition: color 200ms ease;
+}
+.site-nav .nav-signin-link:hover { color: var(--action-blue); }
+.site-nav .nav-signin-link:focus-visible,
+.site-nav .ip-nav-link:focus-visible { outline: 2px solid var(--midnight); outline-offset: 2px; border-radius: 4px; }
+
+@media (min-width: 901px) and (max-width: 1350px) {
+  .site-nav__inner { gap: 8px; }
+  .site-nav .ip-nav-link { padding-inline: 8px; font-size: 13px; }
+}
+
+/* Phones: tabs move to a scrollable row under the brand (same as iparkar.com) */
+@media (max-width: 900px) {
+  .site-nav__inner { grid-template-columns: 1fr auto; height: auto; padding: 8px 16px 0; row-gap: 0; }
+  .site-nav .nav-links { justify-content: start; grid-column: 1 / -1; grid-row: 2; overflow-x: auto; margin: 0 -16px; padding: 0 8px; scrollbar-width: none; }
+  .site-nav .nav-links::-webkit-scrollbar { display: none; }
+  .site-nav .brand__name span { display: none; }
+}
