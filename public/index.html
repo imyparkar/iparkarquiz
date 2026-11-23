@@ -4,8 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#02093a">
-<title>Live HSE Quiz – iParkar Learning</title>
-<meta name="description" content="Live, timed HSE quiz from iParkar Learning — presenter screen">
+<title>Live HSE Quiz – Multiplayer Safety Quiz for Toolbox Talks | iParkar Learning</title>
+<meta name="description" content="Run a live, timed HSE quiz for your crew. 500 questions on 24 KOC HSSE procedures, QR-code joining on any phone, a live leaderboard and winners podium.">
+<link rel="canonical" href="https://quiz.iparkar.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="iParkar Learning">
+<meta property="og:title" content="Live HSE Quiz – iParkar Learning">
+<meta property="og:description" content="A live, timed multiplayer HSE quiz for toolbox talks and safety training. Participants join by QR code and a live leaderboard keeps score.">
+<meta property="og:url" content="https://quiz.iparkar.com/">
+<meta property="og:image" content="https://quiz.iparkar.com/brand/iparkar-mark-primary-1024.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Live HSE Quiz","url":"https://quiz.iparkar.com/","applicationCategory":"EducationalApplication","operatingSystem":"Any (web browser)","description":"A live, timed multiplayer HSE quiz for toolbox talks and safety training, with 500 questions on 24 KOC HSSE procedures, QR-code joining and a live leaderboard.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"publisher":{"@type":"Organization","name":"iParkar Learning","url":"https://iparkar.com/"}}</script>
+<script>try{if(localStorage.getItem("ipq_acct")==="1")document.documentElement.classList.add("acct")}catch(e){}</script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -31,6 +40,50 @@
     <button class="btn small end-session hidden" id="endSessionBtn" type="button" title="End this session and return to the quiz home page">End session</button>
   </div>
 </header>
+
+<!-- Public introduction: what the Live HSE Quiz is. Shown to visitors who are not signed in (and to search engines); signed-in presenters go straight to the setup below. -->
+<main id="about" class="quiz-about" aria-labelledby="aboutTitle">
+  <div class="about-hero">
+    <div class="eyebrow">iParkar Learning</div>
+    <h1 id="aboutTitle"><span class="hl">Live</span> HSE Quiz</h1>
+    <p class="lead">A live, timed safety quiz for toolbox talks, safety stand-downs and training sessions. You present it on one screen; your crew scans a QR code and answers on their own phones, with a leaderboard that moves after every answer.</p>
+    <div class="about-cta">
+      <a class="pill filled" href="/login?next=%2F">Sign in to present a quiz</a>
+      <a class="pill ghost" href="play.html">Join a quiz with a room code</a>
+    </div>
+    <p class="about-note">Presenting needs a free iParkar Learning account. Participants only enter a name — no account needed.</p>
+  </div>
+
+  <div class="about-body">
+    <section class="about-section" aria-labelledby="howTitle">
+      <h2 id="howTitle">How it works</h2>
+      <ol class="about-steps">
+        <li class="wcard"><span class="step-lbl">Step 1</span><h3>Choose topics and level</h3><p>Pick any of the 24 KOC HSSE procedures and a difficulty — Easy for direct recall, Medium for workplace scenarios and specific limits, or a mix of both.</p></li>
+        <li class="wcard"><span class="step-lbl">Step 2</span><h3>Share the QR code</h3><p>Project the join screen. People scan the code, or open the link you share by WhatsApp or email, and type their name.</p></li>
+        <li class="wcard"><span class="step-lbl">Step 3</span><h3>Play, review and score</h3><p>Each question runs for 40 seconds. After it closes, everyone sees the correct answer and the procedure reference, and the live leaderboard updates.</p></li>
+      </ol>
+    </section>
+
+    <section class="about-section about-split" aria-labelledby="bankTitle">
+      <div>
+        <h2 id="bankTitle">What’s in the question bank</h2>
+        <p>The quiz draws up to 20 questions from a bank of 500, spread evenly across the procedures you choose. Answer options are shuffled every run, so the same session never plays twice in the same order. Correct answers stay on the server until each question closes.</p>
+      </div>
+      <ul class="about-facts">
+        <li><b>500</b> questions</li>
+        <li><b>24</b> KOC HSSE procedures</li>
+        <li><b>40 s</b> per question</li>
+        <li><b>Top 3</b> podium and CSV results</li>
+      </ul>
+    </section>
+
+    <section class="about-section" aria-labelledby="whoTitle">
+      <h2 id="whoTitle">Who it’s for</h2>
+      <p>HSE officers, supervisors and trainers who want a quick, engaging way to check what a crew knows about permits to work, gas testing, confined space entry, scaffolding and ladders, respiratory protection and other critical procedures — at a pre-job toolbox talk, an induction refresher or a safety day.</p>
+      <p>Want to use your own questions? <a href="custom.html">Create a Custom Quiz</a> with a free account, save it to your profile and present it the same way. Read more about both on the <a href="https://iparkar.com/live-quiz/">iParkar Learning Live Quiz page</a>.</p>
+    </section>
+  </div>
+</main>
 
 <!-- Start: welcome + choose topics and difficulty, then create a session -->
 <section id="s-start" data-screen class="setup">

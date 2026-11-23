@@ -430,6 +430,34 @@ a { color: var(--action-blue); }
 .ended-mark { width: 64px; height: 64px; margin: 8px auto 18px; display: block; }
 #p-ended .btn { text-decoration: none; margin-top: 8px; }
 
+/* ---------- Public introduction (signed-out visitors and search engines) ---------- */
+.quiz-about { max-width: 1120px; margin: 0 auto; padding: 0 24px 80px; }
+html.acct .quiz-about { display: none; }
+body.public-view .bar-actions .chip, body.public-view #fsBtn { display: none !important; }
+.about-hero { text-align: center; padding: 72px 0 48px; }
+.about-hero h1 { font-size: clamp(44px, 6.6vw, 88px); font-weight: 700; line-height: 1.08; letter-spacing: -0.048em; margin: 0 0 6px; }
+.about-hero .lead { max-width: 680px; margin: 30px auto 28px; font-size: 20px; }
+.about-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.about-cta .pill { text-decoration: none; }
+.about-note { margin: 16px auto 0; color: var(--slate); font-size: 14px; }
+.about-section { margin-top: 48px; }
+.about-section h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.4px; margin: 0 0 14px; }
+.about-section p { font-family: var(--serif); font-size: 18px; line-height: 1.6; color: var(--graphite); max-width: 760px; margin: 0 0 12px; }
+.about-section a { color: var(--action-blue); }
+.about-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.about-steps h3 { margin: 6px 0 8px; font-size: 20px; font-weight: 700; }
+.about-steps p { font-size: 16px; margin: 0; }
+.about-split { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
+.about-facts { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.about-facts li { background: var(--sky-tint); border-radius: var(--r-card); padding: 16px; color: var(--graphite); font-size: 14px; }
+.about-facts b { display: block; color: var(--ink); font-size: 26px; font-weight: 700; line-height: 1.1; margin-bottom: 4px; }
+@media (max-width: 900px) {
+  .about-steps, .about-split { grid-template-columns: 1fr; }
+  .about-hero { padding: 40px 0 28px; }
+  .about-hero .lead { font-size: 17px; }
+  .quiz-about { padding: 0 16px 48px; }
+}
+
 /* ---------- Signed-in presenter ---------- */
 body.auth-pending [data-screen] { visibility: hidden; }
 .user-chip { max-width: 220px; }

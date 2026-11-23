@@ -96,14 +96,28 @@ function renderQR(text) {
 function toLogin() {
   location.replace("/login?next=" + encodeURIComponent(location.pathname + location.search));
 }
+// Signed-out visitors see the public introduction (#about) with a sign-in button instead of being sent straight to /login.
+function showPublicIntro() {
+  store("local", "ipq_acct", null);
+  if (location.pathname !== "/" || location.search) { toLogin(); return; } // presenter links (e.g. /present?custom=1) still go to sign-in
+  document.documentElement.classList.remove("acct");
+  $("about").classList.remove("hidden");
+  document.body.classList.add("public-view");
+  $("s-start").classList.add("hidden");
+}
+function hidePublicIntro() {
+  store("local", "ipq_acct", "1");
+  $("about").classList.add("hidden");
+}
 async function refreshSession() {
   try { return (await fetch("/api/custom/auth/refresh", { method: "POST" })).ok; } catch { return false; }
 }
 async function requireAccount() {
   let r = await fetch("/api/custom/me");
   if (r.status === 401 && await refreshSession()) r = await fetch("/api/custom/me");
-  if (r.status === 401) { toLogin(); return false; }
-  if (!r.ok) return null; // accounts not configured or temporarily unavailable; the server still guards room creation
+  if (r.status === 401) { showPublicIntro(); return false; }
+  if (!r.ok) { hidePublicIntro(); return null; } // accounts not configured or temporarily unavailable; the server still guards room creation
+  hidePublicIntro();
   const { user } = await r.json();
   const label = user.name || user.email || "Signed in";
   $("userName").textContent = label;
@@ -466,6 +480,7 @@ $("signOutBtn").onclick = async () => {
   if (state && state.phase !== "final" && !confirm("Sign out? Your current session will keep running and can be resumed after you sign in again.")) return;
   try { await fetch("/api/custom/auth/logout", { method: "POST" }); } catch {}
   if (sock) sock.close();
+  store("local", "ipq_acct", null);
   location.replace("/login");
 };
 $("topics").addEventListener("change", (e) => {
