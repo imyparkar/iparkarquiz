@@ -41,48 +41,83 @@
   </div>
 </header>
 
-<!-- Public introduction: what the Live HSE Quiz is. Shown to visitors who are not signed in (and to search engines); signed-in presenters go straight to the setup below. -->
+<!-- Public introduction: what the Live HSE Quiz is. Shown to visitors who are not signed in (and to search engines); signed-in presenters go straight to the setup below. Styled like iparkar.com/live-quiz/. -->
 <main id="about" class="quiz-about" aria-labelledby="aboutTitle">
-  <div class="about-hero">
-    <div class="eyebrow">iParkar Learning</div>
-    <h1 id="aboutTitle"><span class="hl">Live</span> HSE Quiz</h1>
-    <p class="lead">A live, timed safety quiz for toolbox talks, safety stand-downs and training sessions. You present it on one screen; your crew scans a QR code and answers on their own phones, with a leaderboard that moves after every answer.</p>
-    <div class="about-cta">
-      <a class="pill filled" href="/login?next=%2F">Sign in to present a quiz</a>
-      <a class="pill ghost" href="play.html">Join a quiz with a room code</a>
-    </div>
-    <p class="about-note">Presenting needs a free iParkar Learning account. Participants only enter a name — no account needed.</p>
-  </div>
-
-  <div class="about-body">
-    <section class="about-section" aria-labelledby="howTitle">
-      <h2 id="howTitle">How it works</h2>
-      <ol class="about-steps">
-        <li class="wcard"><span class="step-lbl">Step 1</span><h3>Choose topics and level</h3><p>Pick any of the 24 KOC HSSE procedures and a difficulty — Easy for direct recall, Medium for workplace scenarios and specific limits, or a mix of both.</p></li>
-        <li class="wcard"><span class="step-lbl">Step 2</span><h3>Share the QR code</h3><p>Project the join screen. People scan the code, or open the link you share by WhatsApp or email, and type their name.</p></li>
-        <li class="wcard"><span class="step-lbl">Step 3</span><h3>Play, review and score</h3><p>Each question runs for 40 seconds. After it closes, everyone sees the correct answer and the procedure reference, and the live leaderboard updates.</p></li>
-      </ol>
-    </section>
-
-    <section class="about-section about-split" aria-labelledby="bankTitle">
-      <div>
-        <h2 id="bankTitle">What’s in the question bank</h2>
-        <p>The quiz draws up to 20 questions from a bank of 500, spread evenly across the procedures you choose. Answer options are shuffled every run, so the same session never plays twice in the same order. Correct answers stay on the server until each question closes.</p>
+  <section class="qa-banner">
+    <div class="qa-banner__text">
+      <p class="qa-banner__eyebrow">Live HSE quizzes for crews, teams and classrooms</p>
+      <h1 id="aboutTitle" class="qa-banner__title">Live HSE <span class="qa-hl">Quiz.</span></h1>
+      <p class="qa-banner__lead">A live, timed safety quiz for toolbox talks, safety stand-downs and training sessions. You present it on one screen; your crew scans a QR code and answers on their own phones, with a leaderboard that moves after every answer.</p>
+      <div class="qa-cta">
+        <a class="qa-btn qa-btn--marigold" href="/login?next=%2F"><span class="qa-dot" aria-hidden="true"></span>Sign in to present a quiz</a>
+        <a class="qa-btn qa-btn--light" href="play.html">Join a quiz with a room code</a>
       </div>
-      <ul class="about-facts">
-        <li><b>500</b> questions</li>
-        <li><b>24</b> KOC HSSE procedures</li>
-        <li><b>40 s</b> per question</li>
-        <li><b>Top 3</b> podium and CSV results</li>
-      </ul>
-    </section>
+      <p class="qa-banner__note">Presenting needs a free iParkar Learning account. Participants only enter a name — no account needed.</p>
+    </div>
+    <ul class="qa-stats">
+      <li><strong data-count="500">500</strong><span>HSE questions</span></li>
+      <li><strong data-count="24">24</strong><span>KOC HSSE procedures</span></li>
+      <li><strong data-count="40" data-suffix="s">40s</strong><span>per question</span></li>
+    </ul>
+  </section>
 
-    <section class="about-section" aria-labelledby="whoTitle">
-      <h2 id="whoTitle">Who it’s for</h2>
-      <p>HSE officers, supervisors and trainers who want a quick, engaging way to check what a crew knows about permits to work, gas testing, confined space entry, scaffolding and ladders, respiratory protection and other critical procedures — at a pre-job toolbox talk, an induction refresher or a safety day.</p>
-      <p>Want to use your own questions? <a href="custom.html">Create a Custom Quiz</a> with a free account, save it to your profile and present it the same way. Read more about both on the <a href="https://iparkar.com/live-quiz/">iParkar Learning Live Quiz page</a>.</p>
-    </section>
-  </div>
+  <section class="qa-section" aria-labelledby="howTitle">
+    <h2 id="howTitle" class="qa-h2">How it works</h2>
+    <ol class="qa-steps qa-stagger">
+      <li class="qa-step qa-step--coral"><span class="qa-step__num">1</span><h3>Choose topics and level</h3><p>Pick any of the 24 KOC HSSE procedures and a difficulty — Easy for direct recall, Medium for workplace scenarios and specific limits, or a mix of both.</p></li>
+      <li class="qa-step qa-step--marigold"><span class="qa-step__num">2</span><h3>Share the QR code</h3><p>Project the join screen. People scan the code, or open the link you share by WhatsApp or email, and type their name.</p></li>
+      <li class="qa-step qa-step--sky"><span class="qa-step__num">3</span><h3>Play, review and score</h3><p>Each question runs for 40 seconds. After it closes, everyone sees the correct answer and the procedure reference, and the live leaderboard updates.</p></li>
+    </ol>
+  </section>
+
+  <section class="qa-section qa-split" aria-labelledby="bankTitle">
+    <div>
+      <h2 id="bankTitle" class="qa-h2">What’s in the question bank</h2>
+      <p class="qa-copy">The quiz draws up to 20 questions from a bank of 500, spread evenly across the procedures you choose. Answer options are shuffled every run, so the same session never plays twice in the same order. Correct answers stay on the server until each question closes.</p>
+    </div>
+    <ul class="qa-tiles qa-stagger">
+      <li class="qa-tile--marigold"><b>20</b>questions per round</li>
+      <li class="qa-tile--sky"><b>3</b>difficulty settings</li>
+      <li class="qa-tile--coral"><b>Top 3</b>winners podium</li>
+      <li class="qa-tile--peach"><b>CSV</b>results download</li>
+    </ul>
+  </section>
+
+  <section class="qa-section" aria-labelledby="topicsTitle">
+    <h2 id="topicsTitle" class="qa-h2">Procedures in the bank</h2>
+    <ul class="qa-topics qa-stagger">
+      <li class="qa-topic--marigold">Permit to Work</li>
+      <li class="qa-topic--sky">Gas testing</li>
+      <li class="qa-topic--coral">Hot work</li>
+      <li class="qa-topic--forest">Confined space entry</li>
+      <li class="qa-topic--peach">Scaffolding and ladders</li>
+      <li class="qa-topic--tint">Respiratory protection</li>
+      <li class="qa-topic--marigold">Vessel isolation</li>
+      <li class="qa-topic--sky">Radiography and NORM</li>
+    </ul>
+  </section>
+
+  <section class="qa-section" aria-labelledby="whoTitle">
+    <div class="qa-cards qa-stagger">
+      <div class="qa-card qa-card--marigold">
+        <span class="qa-card__icon" aria-hidden="true">01</span>
+        <span class="qa-pill">Who it’s for</span>
+        <h2 id="whoTitle">HSE officers, supervisors and trainers</h2>
+        <p>A quick, engaging way to check what a crew knows about critical procedures — at a pre-job toolbox talk, an induction refresher or a safety day.</p>
+        <ul class="qa-ticks"><li>Works on any phone or laptop</li><li>No app to install</li><li>Procedure reference after every question</li></ul>
+        <a class="qa-btn qa-btn--dark" href="/login?next=%2F">Sign in to present</a>
+      </div>
+      <div class="qa-card qa-card--sky">
+        <span class="qa-card__icon" aria-hidden="true">02</span>
+        <span class="qa-pill">Your questions, live</span>
+        <h2>Custom Quiz</h2>
+        <p>Want to use your own questions? Create a free account, write your questions, choose the correct answers and present them the same way.</p>
+        <ul class="qa-ticks"><li>Free creator account</li><li>Save, edit and reuse quizzes</li><li>Resume sessions and download results</li></ul>
+        <a class="qa-btn qa-btn--dark" href="custom.html">Create a Custom Quiz</a>
+      </div>
+    </div>
+    <p class="qa-fineprint">Read more about both on the <a href="https://iparkar.com/live-quiz/">iParkar Learning Live Quiz page</a>.</p>
+  </section>
 </main>
 
 <!-- Start: welcome + choose topics and difficulty, then create a session -->
@@ -247,5 +282,6 @@
 <script src="qrcode.js"></script>
 <script src="common.js"></script>
 <script src="host.js"></script>
+<script src="motion.js" defer></script>
 </body>
 </html>
